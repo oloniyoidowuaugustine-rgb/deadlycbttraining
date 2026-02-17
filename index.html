@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBT Simulator Subject by Subject</title>
+<style>
+body {
+  font-family: Arial;
+  background: #1b1b2f;
+  color: #fff;
+  margin: 0;
+  padding: 0;
+}
+header {
+  background: #ffcc00;
+  color: #1b1b2f;
+  padding: 15px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: bold;
+}
+.screen {
+  max-width: 700px;
+  margin: 20px auto;
+  background: #2c2c4a;
+  padding: 20px;
+  border-radius: 12px;
+}
+button {
+  display: block;
+  width: 90%;
+  max-width: 500px;
+  margin: 10px auto;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: #ffcc00;
+  color: #1b1b2f;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+button:hover { background: #ffaa00; }
+#timer { color: #ff5555; font-weight: bold; margin-bottom: 10px; }
+#progress { margin-bottom: 10px; }
+#score { margin-top: 15px; }
+#leaderboard { margin-top: 20px; text-align: left; }
+</style>
+</head>
+<body>
+
+<header>CBT Simulator 🧠📘</header>
+
+<div id="subject_selection" class="screen">
+  <h3>Select Subjects</h3>
+  <label><input type="checkbox" class="subj" value="Physics"> Physics</label><br>
+  <label><input type="checkbox" class="subj" value="Chemistry"> Chemistry</label><br>
+  <label><input type="checkbox" class="subj" value="Biology"> Biology</label><br>
+  <label><input type="checkbox" class="subj" value="Mathematics"> Mathematics</label><br>
+  <button onclick="startExam()">Start Exam</button>
+</div>
+
+<div id="quiz_container" class="screen" style="display:none;">
+  <p id="progress"></p>
+  <p id="timer"></p>
+  <p id="question"></p>
+  <div id="options"></div>
+  <p id="score"></p>
+</div>
+
+<div id="leaderboard" class="screen">
+  <h3>Leaderboard (Highest Score)</h3>
+  <ol id="leaderboard_list"></ol>
+</div>
+
+<script>
+// ——————————————————————————————
+// Questions (Example 10 each; replace with 100+ per subject easily)
+// ——————————————————————————————
+const subjects = {};
+
+// Physics
+subjects.Physics = [
+  {question:"SI unit of force?", options:["Newton","Joule","Watt","Pascal"], answer:"Newton"},
+  {question:"Speed of light?", options:["3×10^8 m/s","1×10^7 m/s","5×10^5 m/s","3×10^6 m/s"], answer:"3×10^8 m/s"},
+  {question:"Acceleration due to gravity?", options:["9.8 m/s²","8.9","10.5","9.0"], answer:"9.8 m/s²"},
+  {question:"Newton's 3rd law?", options:["F=ma","Action/Reaction","v²-u²","Power=W/t"], answer:"Action/Reaction"},
+  {question:"Unit of electric current?", options:["Volt","Ohm","Ampere","Tesla"], answer:"Ampere"},
+  {question:"Voltage measured by?", options:["Voltmeter","Ammeter","Thermometer","Barometer"], answer:"Voltmeter"},
+  {question:"Frequency measured in?", options:["Hertz","Ohm","Tesla","Newton"], answer:"Hertz"},
+  {question:"Kinetic energy formula?", options:["1/2 mv²","mg h","F d","mv"], answer:"1/2 mv²"},
+  {question:"Work done when force ⊥ displacement?", options:["Zero","Max","Min","Infinite"], answer:"Zero"},
+  {question:"Power unit?", options:["Watt","Newton","Joule","Pascal"], answer:"Watt"},
+];
+
+// Chemistry
+subjects.Chemistry = [
+  {question:"Formula for water?", options:["H2O","CO2","O2","H2"], answer:"H2O"},
+  {question:"Gas known as laughing gas?", options:["Oxygen","Nitrous oxide","Nitrogen","CO2"], answer:"Nitrous oxide"},
+  {question:"pH of neutral water?", options:["7","0","14","1"], answer:"7"},
+  {question:"Atomic number of Carbon?", options:["6","8","1","7"], answer:"6"},
+  {question:"Main constituent of natural gas?", options:["Methane","Ethane","Propane","Butane"], answer:"Methane"},
+  {question:"Acid in stomach?", options:["HCl","H2SO4","HNO3","CH3COOH"], answer:"HCl"},
+  {question:"Symbol of Gold?", options:["Au","Ag","Fe","Pb"], answer:"Au"},
+  {question:"Bond in NaCl?", options:["Ionic","Covalent","Metallic","Hydrogen"], answer:"Ionic"},
+  {question:"Formula of table salt?", options:["NaCl","KCl","CaCO3","MgO"], answer:"NaCl"},
+  {question:"Element forming rust?", options:["Iron","Copper","Aluminium","Zinc"], answer:"Iron"},
+];
+
+// Biology
+subjects.Biology = [
+  {question:"Powerhouse of the cell?", options:["Nucleus","Mitochondria","Ribosome","Cell wall"], answer:"Mitochondria"},
+  {question:"Genetic material?", options:["DNA","RNA","Protein","Lipid"], answer:"DNA"},
+  {question:"Organ pumping blood?", options:["Heart","Liver","Kidney","Lung"], answer:"Heart"},
+  {question:"Where food is made?", options:["Leaf","Root","Stem","Flower"], answer:"Leaf"},
+  {question:"Basic unit of life?", options:["Atom","Cell","Molecule","Organ"], answer:"Cell"},
+  {question:"Organisms making own food?", options:["Heterotrophs","Autotrophs","Decomposers","Parasites"], answer:"Autotrophs"},
+  {question:"Cells fighting infection?", options:["Red","White","Platelets","Plasma"], answer:"White"},
+  {question:"Pigment giving green color?", options:["Chlorophyll","Carotene","Xanthophyll","Anthocyanin"], answer:"Chlorophyll"},
+  {question:"Brain part controlling balance?", options:["Cerebellum","Cerebrum","Medulla","Spinal cord"], answer:"Cerebellum"},
+  {question:"Carries oxygen in blood?", options:["Plasma","Red cells","Platelets","White cells"], answer:"Red cells"},
+];
+
+// Mathematics
+subjects.Mathematics = [
+  {question:"12×12?", options:["144","124","132","154"], answer:"144"},
+  {question:"√121?", options:["10","11","12","13"], answer:"11"},
+  {question:"15% of 200?", options:["30","25","35","40"], answer:"30"},
+  {question:"5+7×2?", options:["24","19","26","14"], answer:"19"},
+  {question:"9²?", options:["81","72","90","99"], answer:"81"},
+  {question:"π≈?", options:["3.14","3.41","2.14","3.41"], answer:"3.14"},
+  {question:"LCM of 4 and 6?", options:["12","6","24","10"], answer:"12"},
+  {question:"HCF of 12 and 18?", options:["6","3","12","9"], answer:"6"},
+  {question:"Derivative of x²?", options:["2x","x","x³","1"], answer:"2x"},
+  {question:"7+8×2?", options:["30","23","24","22"], answer:"23"},
+];
+
+// ——————————————————————————————
+// Helper
+// ——————————————————————————————
+function shuffle(array){ for(let i=array.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [array[i],array[j]]=[array[j],array[i]]; } return array; }
+
+let subjectsOrder=[], currentSubjectIndex=0;
+let examQ=[], current=0, score=0, timer, timeLeft=15;
+const totalMarks=400;
+
+const qEl=document.getElementById("question");
+const optsEl=document.getElementById("options");
+const scoreEl=document.getElementById("score");
+const timerEl=document.getElementById("timer");
+const progEl=document.getElementById("progress");
+const leadList=document.getElementById("leaderboard_list");
+
+// ——————————————————————————————
+// Start exam
+// ——————————————————————————————
+function startExam(){
+  const checked = document.querySelectorAll(".subj:checked");
+  if(checked.length<1){ alert("Select at least 1 subject"); return; }
+  subjectsOrder = Array.from(checked).map(cb => cb.value);
+  currentSubjectIndex = 0;
+  startSubject(subjectsOrder[currentSubjectIndex]);
+}
+
+function startSubject(sub){
+  examQ = shuffle([...subjects[sub]]);
+  current=0; score=0;
+  document.getElementById("subject_selection").style.display="none";
+  document.getElementById("quiz_container").style.display="block";
+  loadQ();
+}
+
+// ——————————————————————————————
+// Timer & Questions
+// ——————————————————————————————
+function startTimer(){
+  timeLeft=15;
+  timerEl.textContent="Time left: "+timeLeft+"s";
+  timer=setInterval(()=>{
+    timeLeft--;
+    timerEl.textContent="Time left: "+timeLeft+"s";
+    if(timeLeft<=0){ clearInterval(timer); nextQ(); }
+  },1000);
+}
+
+function loadQ(){
+  if(current>=examQ.length){ nextQ(); return; }
+  startTimer();
+  const q=examQ[current];
+  progEl.textContent=`${subjectsOrder[currentSubjectIndex]} Q ${current+1} / ${examQ.length}`;
+  qEl.textContent=q.question;
+  optsEl.innerHTML="";
+  const choices=shuffle([...q.options]);
+  choices.forEach(opt=>{
+    const b=document.createElement("button");
+    b.textContent=opt; b.onclick=()=>checkA(opt);
+    optsEl.appendChild(b);
+  });
+}
+
+function checkA(sel){
+  clearInterval(timer);
+  const pts = Math.floor(totalMarks/examQ.length/subjectsOrder.length);
+  if(sel===examQ[current].answer) score+=pts;
+  nextQ();
+}
+
+// ——————————————————————————————
+// Next Question / Subject
+// ——————————————————————————————
+function nextQ(){
+  current++;
+  if(current>=examQ.length){
+    currentSubjectIndex++;
+    if(currentSubjectIndex<subjectsOrder.length){
+      alert(`Finished ${subjectsOrder[currentSubjectIndex-1]}! Now moving to ${subjectsOrder[currentSubjectIndex]}`);
+      startSubject(subjectsOrder[currentSubjectIndex]);
+      return;
+    } else {
+      finishExam();
+      return;
+    }
+  }
+  loadQ();
+  scoreEl.textContent=`Score: ${score} / ${totalMarks}`;
+}
+
+// ——————————————————————————————
+// Finish Exam & Leaderboard
+// ——————————————————————————————
+function finishExam(){
+  qEl.textContent=`Exam Finished! Total Score: ${score} / ${totalMarks}`;
+  optsEl.innerHTML="<button onclick='restartExam()'>Restart</button>";
+  progEl.textContent="Completed";
+  timerEl.textContent="";
+  saveLead(score);
+  showLead();
+}
+
+function restartExam(){
+  document.getElementById("subject_selection").style.display="block";
+  document.getElementById("quiz_container").style.display="none";
+}
+
+function saveLead(sc){
+  let lb=JSON.parse(localStorage.getItem("leader"))||[];
+  lb.push(sc);
+  lb.sort((a,b)=>b-a);
+  lb=lb.slice(0,1); // keep only top score
+  localStorage.setItem("leader",JSON.stringify(lb));
+}
+
+function showLead(){
+  let lb=JSON.parse(localStorage.getItem("leader"))||[];
+  leadList.innerHTML="";
+  lb.forEach(s=>{
+    const li=document.createElement("li");
+    li.textContent=s;
+    leadList.appendChild(li);
+  });
+}
+
+showLead();
+</script>
+
+</body>
+</html>
