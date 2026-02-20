@@ -3,266 +3,1228 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CBT Simulator Subject by Subject</title>
+<title>JAMB CBT Free Navigation with Highlights</title>
 <style>
-body {
-  font-family: Arial;
-  background: #1b1b2f;
-  color: #fff;
-  margin: 0;
-  padding: 0;
-}
-header {
-  background: #ffcc00;
-  color: #1b1b2f;
-  padding: 15px;
-  text-align: center;
-  font-size: 22px;
-  font-weight: bold;
-}
-.screen {
-  max-width: 700px;
-  margin: 20px auto;
-  background: #2c2c4a;
-  padding: 20px;
-  border-radius: 12px;
-}
-button {
-  display: block;
-  width: 90%;
-  max-width: 500px;
-  margin: 10px auto;
-  padding: 12px;
-  border-radius: 8px;
-  border: none;
-  background: #ffcc00;
-  color: #1b1b2f;
-  font-size: 16px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-button:hover { background: #ffaa00; }
-#timer { color: #ff5555; font-weight: bold; margin-bottom: 10px; }
-#progress { margin-bottom: 10px; }
-#score { margin-top: 15px; }
-#leaderboard { margin-top: 20px; text-align: left; }
+body{ font-family: Arial; background:#1b1b2f; color:white; margin:0; padding:0;}
+header{ background:#ffcc00; color:black; text-align:center; padding:15px; font-weight:bold;}
+.screen{ max-width:700px; margin:20px auto; background:#2c2c4a; padding:20px; border-radius:10px;}
+button{ display:block; width:90%; margin:10px auto; padding:10px; border:none; border-radius:8px; background:#ffcc00; cursor:pointer;}
+button:hover{ background:#ffaa00;}
+.correct{background-color:green !important; color:white;}
+.wrong{background-color:red !important; color:white;}
+#timer{ font-weight:bold; color:#ff4444;}
+#leaderboard{ margin-top:20px; background:#2c2c4a; padding:10px; border-radius:10px;}
 </style>
 </head>
 <body>
 
-<header>CBT Simulator 🧠📘</header>
+<header>JAMB CBT SYSTEM</header>
 
-<div id="subject_selection" class="screen">
-  <h3>Select Subjects</h3>
-  <label><input type="checkbox" class="subj" value="Physics"> Physics</label><br>
-  <label><input type="checkbox" class="subj" value="Chemistry"> Chemistry</label><br>
-  <label><input type="checkbox" class="subj" value="Biology"> Biology</label><br>
-  <label><input type="checkbox" class="subj" value="Mathematics"> Mathematics</label><br>
-  <button onclick="startExam()">Start Exam</button>
+<!-- SUBJECT SELECTION -->
+<div id="subjectScreen" class="screen">
+<h3>English is compulsory</h3>
+<p>Select exactly 3 other subjects:</p>
+
+<label><input type="checkbox" class="subj" value="Mathematics"> Mathematics</label><br>
+<label><input type="checkbox" class="subj" value="Physics"> Physics</label><br>
+<label><input type="checkbox" class="subj" value="Chemistry"> Chemistry</label><br>
+<label><input type="checkbox" class="subj" value="Biology"> Biology</label><br>
+<label><input type="checkbox" class="subj" value="Geography"> Geography</label><br>
+<label><input type="checkbox" class="subj" value="Computer"> Computer Studies</label><br>
+<label><input type="checkbox" class="subj" value="FurtherMath"> Further Mathematics</label><br>
+<label><input type="checkbox" class="subj" value="Agric"> Agricultural Science</label><br>
+<label><input type="checkbox"class="subj" value="Livestock">Livestock</label><br>
+<button onclick="startExam()">Start Exam</button>
+<p id="error" style="color:red;"></p>
 </div>
 
-<div id="quiz_container" class="screen" style="display:none;">
-  <p id="progress"></p>
-  <p id="timer"></p>
-  <p id="question"></p>
-  <div id="options"></div>
-  <p id="score"></p>
+<!-- SUBJECT NAVIGATION -->
+<div id="subjectNav" class="screen" style="display:none;">
+<h3>Jump to any subject</h3>
+<div id="subjectButtons"></div>
 </div>
 
+<!-- EXAM SCREEN -->
+<div id="examScreen" class="screen" style="display:none;">
+<p id="timer"></p>
+<p id="progress"></p>
+<p id="question"></p>
+<div id="options"></div>
+<p id="score"></p>
+<button onclick="showSubjectNav()">Switch Subject</button>
+</div>
+
+<!-- LEADERBOARD -->
 <div id="leaderboard" class="screen">
-  <h3>Leaderboard (Highest Score)</h3>
-  <ol id="leaderboard_list"></ol>
+<h3>Leaderboard (Top Scores)</h3>
+<ol id="leaderboardList"></ol>
 </div>
 
 <script>
-// ——————————————————————————————
-// Questions (Example 10 each; replace with 100+ per subject easily)
-// ——————————————————————————————
-const subjects = {};
+// ————————————————
+// Free Trial / Subscription Tracking
+// ————————————————
+let freeTrialCount = parseInt(localStorage.getItem("freeTrial")) || 0;
+let isSubscribed = localStorage.getItem("isSubscribed") === "true"; 
+const MAX_FREE_TRIALS = 2;
 
-// Physics
-subjects.Physics = [
-  {question:"SI unit of force?", options:["Newton","Joule","Watt","Pascal"], answer:"Newton"},
-  {question:"Speed of light?", options:["3×10^8 m/s","1×10^7 m/s","5×10^5 m/s","3×10^6 m/s"], answer:"3×10^8 m/s"},
-  {question:"Acceleration due to gravity?", options:["9.8 m/s²","8.9","10.5","9.0"], answer:"9.8 m/s²"},
-  {question:"Newton's 3rd law?", options:["F=ma","Action/Reaction","v²-u²","Power=W/t"], answer:"Action/Reaction"},
-  {question:"Unit of electric current?", options:["Volt","Ohm","Ampere","Tesla"], answer:"Ampere"},
-  {question:"Voltage measured by?", options:["Voltmeter","Ammeter","Thermometer","Barometer"], answer:"Voltmeter"},
-  {question:"Frequency measured in?", options:["Hertz","Ohm","Tesla","Newton"], answer:"Hertz"},
-  {question:"Kinetic energy formula?", options:["1/2 mv²","mg h","F d","mv"], answer:"1/2 mv²"},
-  {question:"Work done when force ⊥ displacement?", options:["Zero","Max","Min","Infinite"], answer:"Zero"},
-  {question:"Power unit?", options:["Watt","Newton","Joule","Pascal"], answer:"Watt"},
-];
-
-// Chemistry
-subjects.Chemistry = [
-  {question:"Formula for water?", options:["H2O","CO2","O2","H2"], answer:"H2O"},
-  {question:"Gas known as laughing gas?", options:["Oxygen","Nitrous oxide","Nitrogen","CO2"], answer:"Nitrous oxide"},
-  {question:"pH of neutral water?", options:["7","0","14","1"], answer:"7"},
-  {question:"Atomic number of Carbon?", options:["6","8","1","7"], answer:"6"},
-  {question:"Main constituent of natural gas?", options:["Methane","Ethane","Propane","Butane"], answer:"Methane"},
-  {question:"Acid in stomach?", options:["HCl","H2SO4","HNO3","CH3COOH"], answer:"HCl"},
-  {question:"Symbol of Gold?", options:["Au","Ag","Fe","Pb"], answer:"Au"},
-  {question:"Bond in NaCl?", options:["Ionic","Covalent","Metallic","Hydrogen"], answer:"Ionic"},
-  {question:"Formula of table salt?", options:["NaCl","KCl","CaCO3","MgO"], answer:"NaCl"},
-  {question:"Element forming rust?", options:["Iron","Copper","Aluminium","Zinc"], answer:"Iron"},
-];
-
-// Biology
-subjects.Biology = [
-  {question:"Powerhouse of the cell?", options:["Nucleus","Mitochondria","Ribosome","Cell wall"], answer:"Mitochondria"},
-  {question:"Genetic material?", options:["DNA","RNA","Protein","Lipid"], answer:"DNA"},
-  {question:"Organ pumping blood?", options:["Heart","Liver","Kidney","Lung"], answer:"Heart"},
-  {question:"Where food is made?", options:["Leaf","Root","Stem","Flower"], answer:"Leaf"},
-  {question:"Basic unit of life?", options:["Atom","Cell","Molecule","Organ"], answer:"Cell"},
-  {question:"Organisms making own food?", options:["Heterotrophs","Autotrophs","Decomposers","Parasites"], answer:"Autotrophs"},
-  {question:"Cells fighting infection?", options:["Red","White","Platelets","Plasma"], answer:"White"},
-  {question:"Pigment giving green color?", options:["Chlorophyll","Carotene","Xanthophyll","Anthocyanin"], answer:"Chlorophyll"},
-  {question:"Brain part controlling balance?", options:["Cerebellum","Cerebrum","Medulla","Spinal cord"], answer:"Cerebellum"},
-  {question:"Carries oxygen in blood?", options:["Plasma","Red cells","Platelets","White cells"], answer:"Red cells"},
-];
-
-// Mathematics
-subjects.Mathematics = [
-  {question:"12×12?", options:["144","124","132","154"], answer:"144"},
-  {question:"√121?", options:["10","11","12","13"], answer:"11"},
-  {question:"15% of 200?", options:["30","25","35","40"], answer:"30"},
-  {question:"5+7×2?", options:["24","19","26","14"], answer:"19"},
-  {question:"9²?", options:["81","72","90","99"], answer:"81"},
-  {question:"π≈?", options:["3.14","3.41","2.14","3.41"], answer:"3.14"},
-  {question:"LCM of 4 and 6?", options:["12","6","24","10"], answer:"12"},
-  {question:"HCF of 12 and 18?", options:["6","3","12","9"], answer:"6"},
-  {question:"Derivative of x²?", options:["2x","x","x³","1"], answer:"2x"},
-  {question:"7+8×2?", options:["30","23","24","22"], answer:"23"},
-];
-
-// ——————————————————————————————
-// Helper
-// ——————————————————————————————
-function shuffle(array){ for(let i=array.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [array[i],array[j]]=[array[j],array[i]]; } return array; }
-
-let subjectsOrder=[], currentSubjectIndex=0;
-let examQ=[], current=0, score=0, timer, timeLeft=15;
-const totalMarks=400;
-
-const qEl=document.getElementById("question");
-const optsEl=document.getElementById("options");
-const scoreEl=document.getElementById("score");
-const timerEl=document.getElementById("timer");
-const progEl=document.getElementById("progress");
-const leadList=document.getElementById("leaderboard_list");
-
-// ——————————————————————————————
-// Start exam
-// ——————————————————————————————
-function startExam(){
-  const checked = document.querySelectorAll(".subj:checked");
-  if(checked.length<1){ alert("Select at least 1 subject"); return; }
-  subjectsOrder = Array.from(checked).map(cb => cb.value);
-  currentSubjectIndex = 0;
-  startSubject(subjectsOrder[currentSubjectIndex]);
-}
-
-function startSubject(sub){
-  examQ = shuffle([...subjects[sub]]);
-  current=0; score=0;
-  document.getElementById("subject_selection").style.display="none";
-  document.getElementById("quiz_container").style.display="block";
-  loadQ();
-}
-
-// ——————————————————————————————
-// Timer & Questions
-// ——————————————————————————————
-function startTimer(){
-  timeLeft=15;
-  timerEl.textContent="Time left: "+timeLeft+"s";
-  timer=setInterval(()=>{
-    timeLeft--;
-    timerEl.textContent="Time left: "+timeLeft+"s";
-    if(timeLeft<=0){ clearInterval(timer); nextQ(); }
-  },1000);
-}
-
-function loadQ(){
-  if(current>=examQ.length){ nextQ(); return; }
-  startTimer();
-  const q=examQ[current];
-  progEl.textContent=`${subjectsOrder[currentSubjectIndex]} Q ${current+1} / ${examQ.length}`;
-  qEl.textContent=q.question;
-  optsEl.innerHTML="";
-  const choices=shuffle([...q.options]);
-  choices.forEach(opt=>{
-    const b=document.createElement("button");
-    b.textContent=opt; b.onclick=()=>checkA(opt);
-    optsEl.appendChild(b);
-  });
-}
-
-function checkA(sel){
-  clearInterval(timer);
-  const pts = Math.floor(totalMarks/examQ.length/subjectsOrder.length);
-  if(sel===examQ[current].answer) score+=pts;
-  nextQ();
-}
-
-// ——————————————————————————————
-// Next Question / Subject
-// ——————————————————————————————
-function nextQ(){
-  current++;
-  if(current>=examQ.length){
-    currentSubjectIndex++;
-    if(currentSubjectIndex<subjectsOrder.length){
-      alert(`Finished ${subjectsOrder[currentSubjectIndex-1]}! Now moving to ${subjectsOrder[currentSubjectIndex]}`);
-      startSubject(subjectsOrder[currentSubjectIndex]);
-      return;
-    } else {
-      finishExam();
-      return;
-    }
+function canStartExam() {
+  if (isSubscribed) return true;        // Subscribed users can always continue
+  if (freeTrialCount < MAX_FREE_TRIALS) {
+    freeTrialCount++;
+    localStorage.setItem("freeTrial", freeTrialCount);
+    return true;
   }
-  loadQ();
-  scoreEl.textContent=`Score: ${score} / ${totalMarks}`;
+  return false;
 }
 
-// ——————————————————————————————
-// Finish Exam & Leaderboard
-// ——————————————————————————————
-function finishExam(){
-  qEl.textContent=`Exam Finished! Total Score: ${score} / ${totalMarks}`;
-  optsEl.innerHTML="<button onclick='restartExam()'>Restart</button>";
-  progEl.textContent="Completed";
-  timerEl.textContent="";
-  saveLead(score);
-  showLead();
+function showPaymentModal() {
+  FlutterwaveCheckout({
+    public_key: "FLWPUBK_TEST-XXXXXXXXXXXXXXX-X", // Replace with your Flutterwave public key
+    tx_ref: "CBT_APP_" + Date.now(),
+    amount: 4000,
+    currency: "NGN",
+    payment_options: "card,mobilemoney,ussd",
+    customer: {
+      email: prompt("Enter your email to continue payment"),
+      phone_number: prompt("Enter your phone number"),
+      name: prompt("Enter your full name")
+    },
+    callback: function (data) {
+      if (data.status === "successful") {
+        alert("Payment successful! You can now continue.");
+        localStorage.setItem("isSubscribed", "true");
+        localStorage.setItem("freeTrial", MAX_FREE_TRIALS);
+      }
+    },
+    onclose: function() {
+      alert("Payment not completed. You need to subscribe to continue.");
+    },
+    customizations: {
+      title: "CBT Simulator Premium",
+      description: "Subscribe for full access",
+      logo: "https://yourwebsite.com/logo.png"
+    }
+  });
+}
+// ==================== HELPER ====================
+function getRandomQuestions(arr, number){
+  let shuffled = [...arr].sort(()=>0.5-Math.random());
+  return shuffled.slice(0,number);
 }
 
-function restartExam(){
-  document.getElementById("subject_selection").style.display="block";
-  document.getElementById("quiz_container").style.display="none";
+// ==================== QUESTIONS (small examples) ====================
+const subjects = {
+English:[
+{q:"She ___ to school daily.", options:["go","goes","gone","going"], answer:"goes"},
+{q:"Synonym of brave?", options:["Bold","Weak","Lazy","Slow"], answer:"Bold"},
+{q:"Antonym of 'happy'?", options:["Sad","Glad","Joyful","Cheerful"], answer:"Sad"},
+{q:"Correct plural of 'child'?", options:["childs","children","childes","child"], answer:"children"},
+{q:"I ____ seen that movie.", options:["have","has","had","having"], answer:"have"},
+{q:"She ____ to school every day.", options:["go","goes","gone","going"], answer:"goes"},
+{q:"Choose the correct sentence.", options:["He don't like it","He doesn't like it","He not like it","He no likes it"], answer:"He doesn't like it"},
+{q:"Identify the synonym of 'obstinate'.", options:["Stubborn","Flexible","Lazy","Weak"], answer:"Stubborn"},
+{q:"Antonym of 'abundant'?", options:["Scarce","Plentiful","Ample","Rich"], answer:"Scarce"},
+{q:"Select the correct preposition: She is interested ___ music.", options:["in","on","at","for"], answer:"in"},
+{q:"Identify the correct passive form: 'The teacher teaches English.'", options:["English is taught by the teacher","English taught by the teacher","The teacher is taught English","The English teaches the teacher"], answer:"English is taught by the teacher"},
+{q:"Choose the correct tense: By next year, I ___ my degree.", options:["will complete","will have completed","completed","am completing"], answer:"will have completed"},
+{q:"Pick the correct plural form of 'analysis'.", options:["analysises","analyses","analysis","analysies"], answer:"analyses"},
+{q:"Choose the correctly punctuated sentence.", options:["Lets eat, grandma!","Lets eat grandma!","Let's eat grandma!","Lets eat grandma!"], answer:"Lets eat, grandma!"},
+{q:"Identify the figurative language: 'He has a heart of stone.'", options:["Metaphor","Simile","Personification","Hyperbole"], answer:"Metaphor"},
+{q:"Choose the correct article: She bought ___ orange from the market.", options:["an","a","the","no article"], answer:"an"},
+{q:"Find the error: 'He can sings very well.'", options:["He","can","sings","very well"], answer:"sings"},
+{q:"Synonym of 'exacerbate'?", options:["Worsen","Improve","Reduce","Solve"], answer:"Worsen"},
+{q:"Antonym of 'lucid'?", options:["Confusing","Clear","Bright","Transparent"], answer:"Confusing"},
+{q:"Choose the correct form: Neither of the boys ___ present.", options:["is","are","were","be"], answer:"is"},
+{q:"Select the correct word: The manager asked him to ___ the report.", options:["submit","submitt","submited","submission"], answer:"submit"},
+{q:"Pick the correct sentence:", options:["It's raining, we stay home.","It's raining; we will stay home.","Its raining we will stay home.","It raining we stay home."], answer:"It's raining; we will stay home."},
+{q:"Antonym of 'diligent'?", options:["Lazy","Hardworking","Industrious","Active"], answer:"Lazy"},
+{q:"Synonym of 'gregarious'?", options:["Sociable","Shy","Quiet","Reserved"], answer:"Sociable"},
+{q:"Identify the correct tense: 'I have been studying for 3 hours.'", options:["Present perfect continuous","Past perfect","Present continuous","Future perfect"], answer:"Present perfect continuous"},
+{q:"Correct sentence:", options:["Each of the students have a book.","Each of the students has a book.","Each student have a book.","Each student has a books."], answer:"Each of the students has a book."},
+{q:"Pick the correct word: He was too tired ___ continue.", options:["to","for","at","by"], answer:"to"},
+{q:"Identify the figure of speech: 'The wind whispered through the trees.'", options:["Personification","Simile","Metaphor","Alliteration"], answer:"Personification"},
+{q:"Choose the correct word: He is responsible ___ the task.", options:["for","of","to","by"], answer:"for"},
+{q:"Find the correct plural: Criterion", options:["Criterions","Criteria","Criterias","Criterium"], answer:"Criteria"},
+{q:"Synonym of 'belligerent'?", options:["Hostile","Friendly","Calm","Passive"], answer:"Hostile"},
+{q:"Antonym of 'benevolent'?", options:["Malevolent","Kind","Good","Friendly"], answer:"Malevolent"},
+{q:"Select the correct sentence: 'I wish I ___ there yesterday.'", options:["was","were","am","be"], answer:"were"},
+{q:"Choose correct tense: 'By the time he arrives, I ___ my homework.'", options:["finish","will finish","will have finished","finished"], answer:"will have finished"},
+{q:"Correct word: 'He was accused ___ stealing.'", options:["of","for","about","with"], answer:"of"},
+{q:"Pick the correct option: 'Hardly ___ he arrived when it started raining.'", options:["had","has","have","having"], answer:"had"},
+{q:"Find the synonym of 'candid'.", options:["Honest","Secretive","False","Dishonest"], answer:"Honest"},
+{q:"Antonym of 'scarce'?", options:["Plentiful","Rare","Insufficient","Few"], answer:"Plentiful"},
+{q:"Select correct sentence: 'I look forward to ___ from you.'", options:["hearing","hear","heard","hearings"], answer:"hearing"},
+{q:"Identify the error: 'She did not went to school.'", options:["did","went","not","She"], answer:"went"},
+{q:"Synonym of 'perplexed'?", options:["Confused","Happy","Relaxed","Calm"], answer:"Confused"},
+{q:"Antonym of 'arduous'?", options:["Easy","Hard","Difficult","Tough"], answer:"Easy"},
+{q:"Correct sentence:", options:["He asked me where was I going.","He asked me where I was going.","He asked me where I am going.","He asked me where am I going."], answer:"He asked me where I was going."},
+{q:"Choose correct word: She has a lot of work to ___", options:["do","make","take","have"], answer:"do"},
+{q:"Pick the synonym of 'meticulous'", options:["Careful","Careless","Lazy","Quick"], answer:"Careful"},
+{q:"Antonym of 'vivid'?", options:["Dull","Bright","Clear","Colorful"], answer:"Dull"},
+{q:"Correct sentence: 'Neither the boys nor the girl ___ present.'", options:["is","are","was","were"], answer:"is"},
+{q:"Choose correct tense: 'They ___ working for 2 hours.'", options:["have been","has been","had been","are"], answer:"have been"},
+{q:"Synonym of 'ephemeral'?", options:["Short-lived","Permanent","Long","Eternal"], answer:"Short-lived"},
+{q:"Antonym of 'opaque'?", options:["Transparent","Cloudy","Dark","Thick"], answer:"Transparent"},
+{q:"Select correct word: 'The teacher insisted that he ___ come.'", options:["should","shall","will","must"], answer:"should"},
+{q:"Pick correct sentence:", options:["If I was you, I would go.","If I were you, I would go.","If I am you, I would go.","If I be you, I would go."], answer:"If I were you, I would go."},
+{q:"Synonym of 'tenacious'?", options:["Persistent","Lazy","Weak","Shy"], answer:"Persistent"},
+{q:"Antonym of 'frugal'?", options:["Wasteful","Thrifty","Careful","Saving"], answer:"Wasteful"},
+{q:"Choose correct sentence: 'He asked me ___ I was coming.'", options:["if","whether","whom","who"], answer:"if"},
+{q:"Select the correct word: 'She is adept ___ painting.'", options:["at","in","on","for"], answer:"at"},
+{q:"Synonym of 'loquacious'?", options:["Talkative","Silent","Shy","Quiet"], answer:"Talkative"},
+{q:"Antonym of 'ardent'?", options:["Unenthusiastic","Passionate","Fervent","Hot"], answer:"Unenthusiastic"},
+{q:"Pick the correct sentence:", options:["Neither of them are ready.","Neither of them is ready.","Neither of them were ready.","Neither of them be ready."], answer:"Neither of them is ready"},
+{q:"Choose correct word: 'He refrained ___ making comments.'", options:["from","of","for","at"], answer:"from"},
+
+{q:"Choose the correct word: He was reluctant ___ accept the offer.", options:["to","for","at","with"], answer:"to"},
+{q:"Identify the error: 'She suggested that he goes to the doctor.'", options:["She","suggested","goes","to the doctor"], answer:"goes"},
+{q:"Synonym of 'audacious'?", options:["Bold","Shy","Timid","Lazy"], answer:"Bold"},
+{q:"Antonym of 'morose'?", options:["Cheerful","Gloomy","Sad","Sullen"], answer:"Cheerful"},
+{q:"Select correct sentence: 'I would rather you ___ earlier.'", options:["come","came","comes","coming"], answer:"came"},
+{q:"Pick correct sentence:", options:["No sooner had I arrived than it started raining.","No sooner I arrived than it started raining.","Had I no sooner arrived than it started raining.","I no sooner arrived than it started raining."], answer:"No sooner had I arrived than it started raining."},
+{q:"Choose correct word: He is capable ___ solving complex problems.", options:["of","for","in","at"], answer:"of"},
+{q:"Identify the correct tense: 'I wish I ___ a better student.'", options:["were","was","am","be"], answer:"were"},
+{q:"Synonym of 'capricious'?", options:["Fickle","Steady","Constant","Reliable"], answer:"Fickle"},
+{q:"Antonym of 'magnanimous'?", options:["Petty","Generous","Kind","Noble"], answer:"Petty"},
+{q:"Choose correct sentence: 'She demanded that he ___ the truth.'", options:["tell","tells","told","telling"], answer:"tell"},
+{q:"Pick the correct word: The suspect was charged ___ theft.", options:["with","for","of","by"], answer:"with"},
+{q:"Identify the error: 'He asked me where is the library.'", options:["He","asked","is","the library"], answer:"is"},
+{q:"Synonym of 'recalcitrant'?", options:["Disobedient","Obedient","Cooperative","Agreeable"], answer:"Disobedient"},
+{q:"Antonym of 'indigenous'?", options:["Foreign","Native","Local","Original"], answer:"Foreign"},
+{q:"Select correct sentence: 'I have never seen ___ beautiful a sunset.'", options:["so","such","as","too"], answer:"such"},
+{q:"Pick correct sentence:", options:["The book which I bought yesterday is interesting.","The book I bought yesterday which is interesting.","The book that I bought yesterday it is interesting.","The book I bought yesterday is interesting."], answer:"The book I bought yesterday is interesting."},
+{q:"Choose correct word: He is proficient ___ French.", options:["in","at","for","on"], answer:"in"},
+{q:"Identify the figure of speech: 'Life is a journey.'", options:["Metaphor","Simile","Personification","Alliteration"], answer:"Metaphor"},
+{q:"Synonym of 'metamorphosis'?", options:["Transformation","Stagnation","Change","Continuity"], answer:"Transformation"},
+{q:"Antonym of 'arduous'?", options:["Easy","Difficult","Strenuous","Tough"], answer:"Easy"},
+{q:"Choose correct sentence: 'Hardly ___ the exam started when the fire alarm went off.'", options:["had","has","have","having"], answer:"had"},
+{q:"Pick correct sentence:", options:["Were I rich, I would travel the world.","Was I rich, I would travel the world.","Am I rich, I would travel the world.","I were rich, I would travel the world."], answer:"Were I rich, I would travel the world."},
+{q:"Select correct word: He abstained ___ voting.", options:["from","of","for","by"], answer:"from"},
+{q:"Identify the error: 'He did not knew the answer.'", options:["did","not","knew","the answer"], answer:"knew"},
+{q:"Synonym of 'vigilant'?", options:["Watchful","Sleepy","Careless","Lazy"], answer:"Watchful"},
+{q:"Antonym of 'succinct'?", options:["Wordy","Brief","Concise","Terse"], answer:"Wordy"},
+{q:"Choose correct sentence: 'If only I ___ taller.'", options:["were","was","am","be"], answer:"were"},
+{q:"Pick the correct sentence:", options:["He behaves as though he is king.","He behaves as though he were king.","He behaves as though he was king.","He behaves as though he be king."], answer:"He behaves as though he were king."},
+{q:"Select correct word: The teacher insisted that he ___ present.", options:["be","is","was","are"], answer:"be"},
+{q:"Identify the error: 'I suggest that she goes home early.'", options:["suggest","that","goes","home"], answer:"goes"},
+{q:"Synonym of 'prolific'?", options:["Productive","Unproductive","Lazy","Idle"], answer:"Productive"},
+{q:"Antonym of 'mundane'?", options:["Extraordinary","Ordinary","Routine","Normal"], answer:"Extraordinary"},
+{q:"Choose correct sentence: 'It is high time you ___ your homework.'", options:["did","do","does","doing"], answer:"did"},
+{q:"Pick correct sentence:", options:["Neither of the players were ready.","Neither of the players was ready.","Neither of the players are ready.","Neither of the players is ready."], answer:"Neither of the players was ready."},
+{q:"Select correct word: He is immune ___ the virus.", options:["to","from","at","for"], answer:"to"},
+{q:"Identify the figure of speech: 'Time is money.'", options:["Metaphor","Simile","Personification","Hyperbole"], answer:"Metaphor"},
+{q:"Synonym of 'eloquent'?", options:["Fluent","Inarticulate","Unclear","Silent"], answer:"Fluent"},
+{q:"Antonym of 'opaque'?", options:["Transparent","Cloudy","Dark","Thick"], answer:"Transparent"},
+{q:"Choose correct sentence: 'I would rather she ___ here now.'", options:["be","is","was","am"], answer:"be"},
+{q:"Pick the correct word: The committee is composed ___ five members.", options:["of","for","with","by"], answer:"of"},
+{q:"Identify the error: 'He suggested that we goes to the market.'", options:["suggested","that","goes","market"], answer:"goes"},
+{q:"Synonym of 'insidious'?", options:["Treacherous","Safe","Harmless","Friendly"], answer:"Treacherous"},
+{q:"Antonym of 'timid'?", options:["Bold","Shy","Afraid","Meek"], answer:"Bold"},
+{q:"Choose correct sentence: 'I wish I ___ known about the meeting.'", options:["had","have","has","having"], answer:"had"},
+{q:"Pick correct sentence:", options:["She demanded that he leave immediately.","She demanded that he leaves immediately.","She demanded that he leaving immediately.","She demanded that he left immediately."], answer:"She demanded that he leave immediately."},
+{q:"Select correct word: He refrained ___ commenting.", options:["from","of","at","for"], answer:"from"},
+{q:"Identify the error: 'They insisted that she goes.'", options:["insisted","that","goes","she"], answer:"goes"},
+{q:"Synonym of 'arbitrary'?", options:["Random","Planned","Intentional","Purposeful"], answer:"Random"},
+{q:"Antonym of 'coherent'?", options:["Incoherent","Logical","Clear","Consistent"], answer:"Incoherent"},
+{q:"Choose correct sentence: 'Had I known, I ___ told you.'", options:["would have","will have","would","would had"], answer:"would have"}
+
+],
+Mathematics:[
+{q:"5 + 7 = ?", options:["10","11","12","13"], answer:"12"},
+{q:"9² = ?", options:["18","72","81","99"], answer:"81"},
+{q:"Derivative of x²?", options:["2x","x","x²","1"], answer:"2x"},
+{q:"Integral of 1/x ?", options:["lnx","x","1/x","e^x"], answer:"lnx"},
+{q:"LCM of 4 and 6?", options:["12","6","24","10"], answer:"12"}
+],
+Physics:[
+{q:"SI unit of force?", options:["Newton","Joule","Watt","Pascal"], answer:"Newton"},
+{q:"Acceleration due to gravity?", options:["9.8 m/s²","8","10","7"], answer:"9.8 m/s²"},
+{q:"A car accelerates uniformly from 10 m/s to 30 m/s in 5 seconds. What is its acceleration?", options:["4 m/s²","5 m/s²","2 m/s²","6 m/s²"], answer:"4 m/s²"},
+{q:"The SI unit of magnetic flux is:", options:["Weber","Tesla","Henry","Ampere"], answer:"Weber"},
+{q:"A body of mass 2 kg is moving at 5 m/s. What is its kinetic energy?", options:["25 J","20 J","50 J","10 J"], answer:"25 J"},
+{q:"Newton's second law states that F =", options:["ma","mv","m/a","v/a"], answer:"ma"},
+{q:"The frequency of a wave is 50 Hz. Its period is:", options:["0.02 s","0.05 s","20 s","50 s"], answer:"0.02 s"},
+{q:"The potential difference across a 5 Ω resistor with 2 A current is:", options:["10 V","7 V","5 V","12 V"], answer:"10 V"},
+{q:"A particle covers 100 m in 4 s. Its average speed is:", options:["25 m/s","20 m/s","24 m/s","30 m/s"], answer:"25 m/s"},
+{q:"The gravitational acceleration on the Moon is approximately:", options:["1.6 m/s²","9.8 m/s²","3.7 m/s²","0.98 m/s²"], answer:"1.6 m/s²"},
+{q:"The SI unit of work is:", options:["Joule","Newton","Watt","Pascal"], answer:"Joule"},
+{q:"A wave has a wavelength of 0.5 m and frequency of 100 Hz. Its speed is:", options:["50 m/s","200 m/s","150 m/s","100 m/s"], answer:"50 m/s"},
+{q:"The pressure of a gas in a closed container increases when:", options:["volume decreases","temperature decreases","molecules decrease","volume increases"], answer:"volume decreases"},
+{q:"The acceleration due to gravity varies with:", options:["Altitude and latitude","Time of day","Temperature","Pressure"], answer:"Altitude and latitude"},
+{q:"A body weighs 500 N on Earth. Its mass is:", options:["50 kg","500 kg","100 kg","5 kg"], answer:"50 kg"},
+{q:"The SI unit of power is:", options:["Watt","Joule","Newton","Ampere"], answer:"Watt"},
+{q:"The momentum of a 2 kg body moving at 3 m/s is:", options:["6 kg·m/s","5 kg·m/s","3 kg·m/s","2 kg·m/s"], answer:"6 kg·m/s"},
+{q:"Ohm's law is represented by:", options:["V=IR","F=ma","P=VI","E=mc²"], answer:"V=IR"},
+{q:"A light ray passes from air to glass. The angle of refraction is less than the angle of incidence because:", options:["Glass is denser than air","Air is denser than glass","Speed of light increases","Wavelength increases"], answer:"Glass is denser than air"},
+{q:"The work done when a force of 10 N moves an object 5 m in the direction of the force is:", options:["50 J","15 J","5 J","100 J"], answer:"50 J"},
+{q:"If a body falls freely from rest, the distance it covers in the third second is:", options:["24.5 m","29.4 m","19.6 m","14.7 m"], answer:"24.5 m"},
+{q:"A transformer has 500 turns in the primary and 100 turns in the secondary. If the primary voltage is 240 V, the secondary voltage is:", options:["48 V","120 V","60 V","24 V"], answer:"48 V"},
+{q:"The escape velocity from Earth is approximately:", options:["11.2 km/s","9.8 m/s²","7.9 km/s","3.6 km/s"], answer:"11.2 km/s"},
+{q:"The unit of electric charge is:", options:["Coulomb","Volt","Ampere","Ohm"], answer:"Coulomb"},
+{q:"A pendulum completes 20 oscillations in 40 s. Its period is:", options:["2 s","0.5 s","1 s","4 s"], answer:"2 s"},
+{q:"The kinetic energy of a body is doubled. Its momentum will:", options:["Increase by √2","Double","Quadruple","Remain same"], answer:"Increase by √2"},
+{q:"The power of a lens is -2 D. Its focal length is:", options:["-0.5 m","2 m","0.5 m","-2 m"], answer:"-0.5 m"},
+{q:"A current of 3 A flows through a resistor of 6 Ω. The potential difference across it is:", options:["18 V","9 V","12 V","6 V"], answer:"18 V"},
+{q:"The unit of capacitance is:", options:["Farad","Henry","Ohm","Tesla"], answer:"Farad"},
+{q:"Two resistors of 4 Ω and 6 Ω are connected in series. Their total resistance is:", options:["10 Ω","2.4 Ω","24 Ω","1 Ω"], answer:"10 Ω"},
+{q:"A body is projected vertically upwards with 20 m/s. Time to reach maximum height is:", options:["2 s","1 s","4 s","5 s"], answer:"2 s"},
+{q:"The work function of a metal is 4 eV. Minimum frequency of light to eject electron is (h=6.63×10⁻³⁴ J·s):", options:["9.7×10¹⁴ Hz","1×10¹⁴ Hz","6×10¹⁴ Hz","8×10¹⁴ Hz"], answer:"9.7×10¹⁴ Hz"},
+{q:"The displacement of a body moving in a circle at constant speed is:", options:["Zero","Equal to distance","Increasing","Constant"], answer:"Zero"},
+{q:"A bullet of mass 0.05 kg moves at 400 m/s. Its kinetic energy is:", options:["4000 J","5000 J","8000 J","2000 J"], answer:"4000 J"},
+{q:"A sound wave has frequency 500 Hz and wavelength 0.68 m. Speed of sound is:", options:["340 m/s","500 m/s","250 m/s","300 m/s"], answer:"340 m/s"},
+{q:"The angle of incidence equals the angle of reflection because of:", options:["Law of reflection","Refraction","Diffraction","Interference"], answer:"Law of reflection"},
+{q:"The gravitational potential energy of a 10 kg body at 5 m height (g=10 m/s²) is:", options:["500 J","50 J","100 J","250 J"], answer:"500 J"},
+{q:"A 12 V battery supplies 3 A current. Power delivered is:", options:["36 W","12 W","15 W","9 W"], answer:"36 W"},
+{q:"A concave lens always forms an image that is:", options:["Virtual","Real","Inverted","Magnified"], answer:"Virtual"},
+{q:"The frequency of second harmonic in a string fixed at both ends (L=1 m, v=200 m/s) is:", options:["200 Hz","100 Hz","400 Hz","300 Hz"], answer:"200 Hz"},
+{q:"A resistor of 5 Ω carries a current of 2 A. Heat produced in 3 s is:", options:["60 J","50 J","30 J","20 J"], answer:"60 J"},
+{q:"The time period of a simple harmonic oscillator is independent of:", options:["Amplitude","Mass","Spring constant","Gravity"], answer:"Amplitude"},
+{q:"The SI unit of electric field is:", options:["N/C","V","J","C"], answer:"N/C"},
+{q:"A car decelerates uniformly from 30 m/s to 0 in 10 s. Deceleration is:", options:["3 m/s²","2 m/s²","4 m/s²","5 m/s²"], answer:"3 m/s²"},
+{q:"The wavelength of light in vacuum is 6×10⁻⁷ m. Its frequency if c=3×10⁸ m/s is:", options:["5×10¹⁴ Hz","6×10¹⁴ Hz","3×10¹⁴ Hz","4×10¹⁴ Hz"], answer:"5×10¹⁴ Hz"},
+{q:"The SI unit of moment of force is:", options:["N·m","Joule","Nm²","Pascal"], answer:"N·m"},
+{q:"The velocity of a body dropped from rest after 4 s (g=10 m/s²) is:", options:["40 m/s","20 m/s","30 m/s","50 m/s"], answer:"40 m/s"},
+{q:"A lens forms an image at 15 cm for an object at 10 cm. Focal length is:", options:["6 cm","5 cm","15 cm","10 cm"], answer:"6 cm"},
+{q:"Two capacitors 4 μF and 6 μF are in parallel. Total capacitance is:", options:["10 μF","24 μF","2.4 μF","0.67 μF"], answer:"10 μF"},
+{q:"The refractive index of a medium is 1.5. Speed of light in the medium is:", options:["2×10⁸ m/s","3×10⁸ m/s","1×10⁸ m/s","4×10⁸ m/s"], answer:"2×10⁸ m/s"},
+{q:"The linear expansion of a rod 2 m long with α=1×10⁻⁵ /°C for 50°C rise is:", options:["0.001 m","0.002 m","0.0001 m","0.01 m"], answer:"0.001 m"},
+{q:"A body of mass 5 kg moving at 10 m/s collides and stops. Impulse experienced is:", options:["50 N·s","5 N·s","100 N·s","10 N·s"], answer:"50 N·s"},
+{q:"The gravitational force between two 2 kg masses 1 m apart is (G=6.67×10⁻¹¹ N·m²/kg²):", options:["2.67×10⁻¹⁰ N","6.67×10⁻¹¹ N","1.33×10⁻¹⁰ N","3.34×10⁻¹⁰ N"], answer:"2.67×10⁻¹⁰ N"},
+{q:"The escape velocity from a planet of radius 6.4×10⁶ m and g=9.8 m/s² is:", options:["11.2 km/s","9.8 m/s","7.9 km/s","3.6 km/s"], answer:"11.2 km/s"},
+{q:"A body falls freely from 45 m. Time to reach the ground (g=9.8 m/s²) is:", options:["3 s","2 s","4 s","1 s"], answer:"3 s"},
+{q:"A 2 kg block is pushed with 10 N. Acceleration is:", options:["5 m/s²","2 m/s²","10 m/s²","0.5 m/s²"], answer:"5 m/s²"},
+{q:"The frequency of a pendulum depends on:", options:["Length and g","Mass","Amplitude","Air resistance"], answer:"Length and g"},
+{q:"A ray of light passes through a prism. The angle of deviation is minimum when:", options:["Angle of incidence equals angle of emergence","Ray enters normally","Ray strikes at critical angle","Ray is perpendicular"], answer:"Angle of incidence equals angle of emergence"},
+{q:"The resistivity of a material is given by:", options:["ρ=RA/L","ρ=RL/A","ρ=V/I","ρ=I/V"], answer:"ρ=RA/L"},
+{q:"A 50 W bulb operates on 220 V. Current drawn is:", options:["0.23 A","2.3 A","0.5 A","1.1 A"], answer:"0.23 A"},
+{q:"The escape velocity from a planet is independent of:", options:["Mass of the object","Mass of planet","Radius of planet","G"], answer:"Mass of the object"},
+{q:"A transformer has turns ratio 5:1. If secondary voltage is 12 V, primary voltage is:", options:["60 V","6 V","15 V","12 V"], answer:"60 V"},
+{q:"A 10 kg body slides down a frictionless slope of 5 m height. Speed at bottom (g=10 m/s²) is:", options:["10 m/s","20 m/s","5 m/s","15 m/s"], answer:"10 m/s"},
+{q:"The power developed by a force of 20 N moving a body at 2 m/s is:", options:["40 W","10 W","20 W","50 W"], answer:"40 W"},
+{q:"A bullet of mass 0.1 kg strikes and embeds in a block. If momentum is 2 kg·m/s, speed of bullet is:", options:["20 m/s","10 m/s","5 m/s","25 m/s"], answer:"20 m/s"},
+{q:"The angular frequency of a simple harmonic oscillator is:", options:["√(k/m)","k/m","m/k","1/√(km)"], answer:"√(k/m)"},
+{q:"The resultant of two equal forces at 60° is:", options:["F","F√3","F/2","2F"], answer:"F"},
+{q:"The SI unit of angular momentum is:", options:["kg·m²/s","kg·m/s²","N·m","J"], answer:"kg·m²/s"},
+{q:"A 0.5 kg mass moves at 4 m/s. Its momentum is:", options:["2 kg·m/s","4 kg·m/s","8 kg·m/s","1 kg·m/s"], answer:"2 kg·m/s"},
+{q:"A 3 Ω and 6 Ω resistor are in parallel. Equivalent resistance is:", options:["2 Ω","9 Ω","18 Ω","1 Ω"], answer:"2 Ω"},
+{q:"The work done in moving a charge 2 C through 12 V is:", options:["24 J","12 J","6 J","2 J"], answer:"24 J"},
+{q:"A concave mirror forms an image at 15 cm for an object at 10 cm. Focal length is:", options:["6 cm","5 cm","15 cm","10 cm"], answer:"6 cm"},
+{q:"The acceleration of a body moving in circle of radius 2 m at 4 m/s is:", options:["8 m/s²","4 m/s²","2 m/s²","16 m/s²"], answer:"8 m/s²"},
+{q:"The force between two 1 kg masses 1 m apart is (G=6.67×10⁻¹¹):", options:["6.67×10⁻¹¹ N","1×10⁻¹¹ N","3×10⁻¹¹ N","2×10⁻¹¹ N"], answer:"6.67×10⁻¹¹ N"},
+{q:"The time period of a 50 Hz AC is:", options:["0.02 s","0.05 s","2 s","0.2 s"], answer:"0.02 s"},
+{q:"A 100 g object falls 5 m. Kinetic energy at bottom (g=10 m/s²) is:", options:["5 J","10 J","50 J","25 J"], answer:"5 J"},
+{q:"The wavelength of sound with frequency 500 Hz and speed 340 m/s is:", options:["0.68 m","1.5 m","0.5 m","0.34 m"], answer:"0.68 m"},
+{q:"Two spheres of radius 2 m and 4 m have volumes ratio:", options:["1:8","1:2","1:4","1:16"], answer:"1:8"},
+{q:"A metal wire stretches 0.01 m under 100 N force. If Young’s modulus is 2×10¹¹ Pa, area is:", options:["2×10⁻⁶ m²","1×10⁻⁶ m²","5×10⁻⁶ m²","2×10⁻⁵ m²"], answer:"2×10⁻⁶ m²"},
+{q:"A lens of focal length 20 cm forms an image at 60 cm. Object distance is:", options:["30 cm","15 cm","40 cm","20 cm"], answer:"30 cm"},
+{q:"A wave has speed 200 m/s, frequency 100 Hz. Wavelength is:", options:["2 m","0.5 m","1 m","4 m"], answer:"2 m"},
+{q:"A current of 2 A passes through 4 Ω resistor. Energy in 5 s is:", options:["80 J","40 J","20 J","100 J"], answer:"80 J"},
+{q:"The force on a 3 C charge in 2 V/m field is:", options:["6 N","3 N","1.5 N","2 N"], answer:"6 N"},
+{q:"The heat produced in 10 s by 5 A current in 2 Ω resistor is:", options:["500 J","50 J","250 J","100 J"], answer:"500 J"},
+{q:"The angular momentum of 2 kg mass moving in circle of radius 0.5 m at 4 m/s is:", options:["4 kg·m²/s","2 kg·m²/s","8 kg·m²/s","1 kg·m²/s"], answer:"4 kg·m²/s"},
+{q:"A 10 kg object moves at 2 m/s. Its kinetic energy is:", options:["20 J","10 J","40 J","50 J"], answer:"20 J"},
+{q:"A wire has resistance 10 Ω. If voltage 20 V, current is:", options:["2 A","0.5 A","1 A","4 A"], answer:"2 A"},
+{q:"A particle moves 3 m east then 4 m north. Displacement is:", options:["5 m","7 m","1 m","6 m"], answer:"5 m"},
+{q:"The maximum speed of a simple harmonic oscillator of amplitude 0.1 m and ω=10 rad/s is:", options:["1 m/s","0.5 m/s","2 m/s","10 m/s"], answer:"1 m/s"},
+{q:"The gravitational acceleration at height h above Earth’s surface:", options:["g'=g(1-h/R)²","g'=g(1+h/R)²","g'=g/h²","g'=gR²"], answer:"g'=g(1-h/R)²"},
+{q:"If 2 identical capacitors 6 μF each are in series, total capacitance is:", options:["3 μF","12 μF","6 μF","2 μF"], answer:"3 μF"},
+{q:"The pressure at depth 10 m in water (ρ=1000 kg/m³) is:", options:["1×10⁵ Pa","1×10⁴ Pa","2×10⁵ Pa","5×10⁴ Pa"], answer:"1×10⁵ Pa"},
+{q:"The total resistance of 2 Ω, 3 Ω, 6 Ω in parallel is:", options:["1 Ω","11 Ω","6 Ω","0.5 Ω"], answer:"1 Ω"},
+{q:"A block slides down incline 30° with μ=0.1. Net acceleration is:", options:["7.7 m/s²","9.8 m/s²","5 m/s²","8 m/s²"], answer:"7.7 m/s²"},
+{q:"The work done by a force of 50 N moving 2 m at 60° to displacement is:", options:["50 J","100 J","25 J","75 J"], answer:"50 J"},
+{q:"The energy of photon of λ=6×10⁻⁷ m is (h=6.63×10⁻³⁴, c=3×10⁸):", options:["3.3×10⁻¹⁹ J","2×10⁻¹⁹ J","1×10⁻¹⁹ J","4×10⁻¹⁹ J"], answer:"3.3×10⁻¹⁹ J"},
+{q:"The current in a 12 V, 4 Ω resistor is:", options:["3 A","4 A","2 A","1 A"], answer:"3 A"},
+{q:"A body moves in uniform circular motion. Acceleration is:", options:["v²/r","v/r","r/v²","v²r"], answer:"v²/r"},
+{q:"The kinetic energy of 0.5 kg mass moving at 10 m/s is:", options:["25 J","50 J","10 J","5 J"], answer:"25 J"},
+{q:"The refractive index of medium with c=3×10⁸ m/s, v=2×10⁸ m/s is:", options:["1.5","1.2","1.8","1.6"], answer:"1.5"},
+{q:"The electric field between two plates 0.02 m apart with 12 V is:", options:["600 V/m","240 V/m","120 V/m","12 V/m"], answer:"600 V/m"},
+{q:"A car decelerates from 30 m/s to 0 in 5 s. Stopping distance is:", options:["75 m","50 m","90 m","60 m"], answer:"75 m"},
+{q:"The momentum of 3 kg body moving at 4 m/s is:", options:["12 kg·m/s","7 kg·m/s","10 kg·m/s","15 kg·m/s"], answer:"12 kg·m/s"},
+{q:"Two point charges 2 C and 3 C are 1 m apart. Force between them (k=9×10⁹) is:", options:["1.08×10¹⁰ N","9×10⁹ N","2×10¹⁰ N","5×10⁹ N"], answer:"1.08×10¹⁰ N"},
+],
+Chemistry:[
+{q:"Formula of water?", options:["H2O","CO2","NaCl","O2"], answer:"H2O"},
+{q:"Atomic number of Carbon?", options:["6","8","1","12"], answer:"6"},
+{q:"What is the molar mass of H2SO4?", options:["98 g/mol","100 g/mol","96 g/mol","92 g/mol"], answer:"98 g/mol"},
+{q:"The number of moles in 18 g of H2O is:", options:["1 mol","2 mol","0.5 mol","3 mol"], answer:"1 mol"},
+{q:"Which gas is evolved when HCl reacts with Zn?", options:["Hydrogen","Oxygen","Chlorine","Nitrogen"], answer:"Hydrogen"},
+{q:"pH of 0.01 M HCl solution is approximately:", options:["2","1","3","4"], answer:"2"},
+{q:"The oxidation number of S in SO3 is:", options:["+6","+4","+2","0"], answer:"+6"},
+{q:"Which element is most electronegative?", options:["Fluorine","Oxygen","Chlorine","Nitrogen"], answer:"Fluorine"},
+{q:"Avogadro’s number is:", options:["6.02×10²³","3.0×10²³","1×10²³","9.0×10²³"], answer:"6.02×10²³"},
+{q:"Empirical formula of C6H12O6 is:", options:["CH2O","C2H4O2","C3H6O3","CHO"], answer:"CH2O"},
+{q:"Which of these is a strong acid?", options:["HCl","CH3COOH","H2CO3","HF"], answer:"HCl"},
+{q:"The reaction 2Na + Cl2 → 2NaCl is:", options:["Redox","Neutralization","Precipitation","Decomposition"], answer:"Redox"},
+{q:"Gas evolved when Na2CO3 reacts with HCl is:", options:["CO2","O2","H2","N2"], answer:"CO2"},
+{q:"The unit of rate of reaction is:", options:["mol/L·s","mol/L","mol/s","L/s"], answer:"mol/L·s"},
+{q:"Which compound is covalent?", options:["CO2","NaCl","KBr","CaO"], answer:"CO2"},
+{q:"The percentage of oxygen in H2O2 is approximately:", options:["47%","50%","42%","44%"], answer:"47%"},
+{q:"Which is the strongest reducing agent?", options:["Na","K","Mg","Ca"], answer:"K"},
+{q:"The electronic configuration of Cl is:", options:["1s2 2s2 2p6 3s2 3p5","1s2 2s2 2p6 3s2 3p6","1s2 2s2 2p6 3s1","1s2 2s2 2p5 3s2"], answer:"1s2 2s2 2p6 3s2 3p5"},
+{q:"Which is amphoteric?", options:["Al2O3","NaCl","CaO","MgCl2"], answer:"Al2O3"},
+{q:"Molecular formula of glucose is:", options:["C6H12O6","C3H6O3","CH2O","C2H4O2"], answer:"C6H12O6"},
+{q:"Volume of 1 mol of gas at STP is:", options:["22.4 L","24 L","20 L","25 L"], answer:"22.4 L"},
+{q:"Which substance is acidic in aqueous solution?", options:["NH4Cl","NaCl","KCl","CaCl2"], answer:"NH4Cl"},
+{q:"The bond in HCl is:", options:["Polar covalent","Ionic","Non-polar covalent","Metallic"], answer:"Polar covalent"},
+{q:"The hybridization of C in CH4 is:", options:["sp3","sp2","sp","sp3d"], answer:"sp3"},
+{q:"Which is an oxidizing agent?", options:["H2SO4","Na","H2","Zn"], answer:"H2SO4"},
+{q:"Mass of 0.5 mol of NaOH is:", options:["20 g","10 g","40 g","50 g"], answer:"20 g"},
+{q:"Which of these is a weak base?", options:["NH3","NaOH","KOH","Ba(OH)2"], answer:"NH3"},
+{q:"Which gas is responsible for greenhouse effect?", options:["CO2","O2","H2","N2"], answer:"CO2"},
+{q:"Reaction: CaCO3 → CaO + CO2 is:", options:["Decomposition","Combination","Displacement","Redox"], answer:"Decomposition"},
+{q:"Which element forms anionic oxide?", options:["Sulfur","Calcium","Magnesium","Aluminium"], answer:"Sulfur"},
+{q:"Which molecule is non-polar?", options:["CO2","HCl","NH3","H2O"], answer:"CO2"},
+{q:"The first ionization energy of an element increases across a period because:", options:["Nuclear charge increases","Atomic radius increases","Number of neutrons decreases","Electron shielding increases"], answer:"Nuclear charge increases"},
+{q:"Empirical formula of benzene is:", options:["CH","C2H2","CH2","C6H6"], answer:"CH"},
+{q:"Which of the following is a covalent network solid?", options:["Diamond","NaCl","MgO","Al"], answer:"Diamond"},
+{q:"Gas law relating pressure and volume is:", options:["Boyle's Law","Charles’ Law","Avogadro’s Law","Gay-Lussac’s Law"], answer:"Boyle's Law"},
+{q:"Which of these is paramagnetic?", options:["O2","N2","CO2","He"], answer:"O2"},
+{q:"pH of 0.001 M HCl is approximately:", options:["3","1","4","2"], answer:"3"},
+{q:"Which salt is formed from strong acid and strong base?", options:["NaCl","NH4Cl","KCl","AlCl3"], answer:"NaCl"},
+{q:"Which of these is ionic?", options:["NaCl","CO2","CH4","NH3"], answer:"NaCl"},
+{q:"Electrolysis of water produces:", options:["H2 and O2","H2O2","O2 only","H2 only"], answer:"H2 and O2"},
+{q:"Molarity of 2 mol in 1 L solution is:", options:["2 M","1 M","0.5 M","4 M"], answer:"2 M"},
+{q:"The limiting reagent is determined by:", options:["Stoichiometry","Mass","Volume","Density"], answer:"Stoichiometry"},
+{q:"Which of these is exothermic?", options:["Combustion of methane","Dissolving salt in water","Melting ice","Boiling water"], answer:"Combustion of methane"},
+{q:"Boiling point of water decreases with:", options:["Decreasing pressure","Increasing pressure","Decreasing volume","Increasing volume"], answer:"Decreasing pressure"},
+{q:"Which molecule exhibits hydrogen bonding?", options:["H2O","CH4","CO2","O2"], answer:"H2O"},
+{q:"The reaction NaOH + HCl → NaCl + H2O is:", options:["Neutralization","Redox","Decomposition","Displacement"], answer:"Neutralization"},
+{q:"Which of these is a reducing agent?", options:["Na","K","Zn","H2O"], answer:"Na"},
+{q:"Which gas is least dense at STP?", options:["H2","O2","N2","CO2"], answer:"H2"},
+{q:"The volume of 1 mol of ideal gas at 0°C, 1 atm is:", options:["22.4 L","24 L","20 L","25 L"], answer:"22.4 L"},
+{q:"Which is a covalent compound?", options:["CO","NaCl","KBr","MgO"], answer:"CO"},
+{q:"Electroplating involves:", options:["Redox","Neutralization","Precipitation","Decomposition"], answer:"Redox"},
+{q:"Which of these is an alkali metal?", options:["Na","Mg","Al","Ca"], answer:"Na"},
+{q:"Mass of 2 mol NaOH (M=40 g/mol) is:", options:["80 g","40 g","60 g","20 g"], answer:"80 g"},
+{q:"Which of these is a strong oxidizing agent?", options:["KMnO4","Na","H2","Zn"], answer:"KMnO4"},
+{q:"Which has the highest boiling point?", options:["H2O","NH3","CH4","CO2"], answer:"H2O"},
+{q:"The reaction 2KClO3 → 2KCl + 3O2 is:", options:["Decomposition","Combination","Redox","Displacement"], answer:"Decomposition"},
+
+{q:"Which of these gases is acidic in water?", options:["CO2","NH3","O2","H2"], answer:"CO2"},
+{q:"The mass of 0.25 mol NaCl (M=58.5 g/mol) is:", options:["14.625 g","58.5 g","29.25 g","10 g"], answer:"14.625 g"},
+{q:"The correct formula of calcium phosphate is:", options:["Ca3(PO4)2","CaPO4","Ca2(PO4)3","Ca(PO4)2"], answer:"Ca3(PO4)2"},
+{q:"Which element forms an ionic bond with chlorine?", options:["Sodium","Carbon","Hydrogen","Oxygen"], answer:"Sodium"},
+{q:"Reaction: Zn + 2HCl → ZnCl2 + H2 is:", options:["Single displacement","Double displacement","Decomposition","Combination"], answer:"Single displacement"},
+{q:"Which of these compounds is polar?", options:["H2O","CH4","CO2","O2"], answer:"H2O"},
+{q:"The oxidation state of N in NH4+ is:", options:["-3","+3","+1","0"], answer:"-3"},
+{q:"The density of a gas at STP can be calculated using:", options:["Molar mass/22.4 L","Mass×Volume","Pressure/Temperature","Volume/Mass"], answer:"Molar mass/22.4 L"},
+{q:"Which of these is an example of a Lewis base?", options:["NH3","HCl","BF3","AlCl3"], answer:"NH3"},
+{q:"The electron pair geometry of CH4 is:", options:["Tetrahedral","Trigonal planar","Linear","Bent"], answer:"Tetrahedral"},
+{q:"Which element has the smallest atomic radius?", options:["Fluorine","Lithium","Oxygen","Sodium"], answer:"Fluorine"},
+{q:"The enthalpy change for an exothermic reaction is:", options:["Negative","Positive","Zero","Depends on T"], answer:"Negative"},
+{q:"Which salt is formed from a weak acid and strong base?", options:["NaCH3COO","NaCl","KBr","CaSO4"], answer:"NaCH3COO"},
+{q:"Which compound has the highest lattice energy?", options:["MgO","NaCl","KBr","CaF2"], answer:"MgO"},
+{q:"The conjugate acid of H2O is:", options:["H3O+","OH-","H2","O2"], answer:"H3O+"},
+{q:"Which reaction is redox?", options:["Zn + CuSO4 → ZnSO4 + Cu","HCl + NaOH → NaCl + H2O","AgNO3 + NaCl → AgCl + NaNO3","CaCO3 → CaO + CO2"], answer:"Zn + CuSO4 → ZnSO4 + Cu"},
+{q:"Which of these is amphiprotic?", options:["HCO3-","NaOH","HCl","H2SO4"], answer:"HCO3-"},
+{q:"Molarity of 3 moles solute in 0.5 L solution is:", options:["6 M","1.5 M","3 M","0.5 M"], answer:"6 M"},
+{q:"Which of these is a covalent network solid?", options:["SiO2","NaCl","KBr","CaO"], answer:"SiO2"},
+{q:"Which of these has the highest electronegativity?", options:["F","O","Cl","N"], answer:"F"},
+{q:"Which substance is oxidized in 2Na + Cl2 → 2NaCl?", options:["Na","Cl2","Both","Neither"], answer:"Na"},
+{q:"Which molecule is planar?", options:["CO2","CH4","NH3","H2O"], answer:"CO2"},
+{q:"The standard enthalpy of formation of an element in its standard state is:", options:["0 kJ/mol","100 kJ/mol","-100 kJ/mol","Depends on element"], answer:"0 kJ/mol"},
+{q:"Which of these compounds is acidic?", options:["SO2","Na2O","CaO","NH3"], answer:"SO2"},
+{q:"Which ion is responsible for acidity of lemon juice?", options:["H+","OH-","Cl-","Na+"], answer:"H+"},
+{q:"Which has the lowest ionization energy?", options:["Na","O","Cl","F"], answer:"Na"},
+{q:"Which reaction is endothermic?", options:["N2 + O2 → 2NO","HCl + NaOH → NaCl + H2O","Combustion of CH4","Freezing of water"], answer:"N2 + O2 → 2NO"},
+{q:"Which of these is a Lewis acid?", options:["BF3","NH3","H2O","OH-"], answer:"BF3"},
+{q:"Which of these salts is soluble in water?", options:["NaCl","AgCl","PbCl2","BaSO4"], answer:"NaCl"},
+{q:"Which gas is least reactive?", options:["N2","O2","Cl2","F2"], answer:"N2"},
+{q:"The pH of 0.1 M NaOH is approximately:", options:["13","1","7","10"], answer:"13"},
+{q:"Which compound is non-polar?", options:["CO2","H2O","NH3","HF"], answer:"CO2"},
+{q:"Which has the highest first ionization energy?", options:["F","Li","Na","K"], answer:"F"},
+{q:"Which of these is paramagnetic?", options:["O2","N2","CO2","He"], answer:"O2"},
+{q:"Reaction: CH4 + 2O2 → CO2 + 2H2O is:", options:["Combustion","Neutralization","Precipitation","Redox"], answer:"Combustion"},
+{q:"Which element forms a covalent bond with H?", options:["C","Na","Mg","Al"], answer:"C"},
+{q:"Which is a Lewis base?", options:["OH-","H+","AlCl3","BF3"], answer:"OH-"},
+{q:"Which reaction is a decomposition?", options:["2KClO3 → 2KCl + 3O2","HCl + NaOH → NaCl + H2O","Zn + HCl → ZnCl2 + H2","Mg + O2 → MgO"], answer:"2KClO3 → 2KCl + 3O2"},
+{q:"Which of these is insoluble in water?", options:["AgCl","NaCl","KBr","CaCl2"], answer:"AgCl"},
+{q:"Which of these elements is diatomic?", options:["O2","Na","K","Ne"], answer:"O2"},
+{q:"Which has the highest lattice energy?", options:["MgO","NaCl","KCl","CaF2"], answer:"MgO"},
+{q:"Which reaction involves electron transfer?", options:["Zn + Cu2+ → Zn2+ + Cu","NaOH + HCl → NaCl + H2O","CaCO3 → CaO + CO2","AgNO3 + NaCl → AgCl + NaNO3"], answer:"Zn + Cu2+ → Zn2+ + Cu"},
+{q:"The pH of 1 M HCl solution is approximately:", options:["0","1","7","14"], answer:"0"},
+{q:"Which compound is basic?", options:["NaOH","HCl","SO2","CO2"], answer:"NaOH"},
+{q:"The molar mass of CO2 is:", options:["44 g/mol","28 g/mol","32 g/mol","12 g/mol"], answer:"44 g/mol"},
+{q:"Which of these is an amphoteric oxide?", options:["Al2O3","MgO","Na2O","SO3"], answer:"Al2O3"},
+{q:"Which of these is a strong electrolyte?", options:["NaCl","CH3OH","C2H5OH","NH3"], answer:"NaCl"},
+{q:"Which gas is produced when Na2CO3 reacts with HCl?", options:["CO2","O2","H2","Cl2"], answer:"CO2"},
+{q:"Which of these has a trigonal planar shape?", options:["BF3","CH4","NH3","H2O"], answer:"BF3"},
+{q:"Which compound exhibits hydrogen bonding?", options:["H2O","CH4","CO2","O2"], answer:"H2O"},
+{q:"The oxidation number of Cr in K2Cr2O7 is:", options:["+6","+3","+2","0"], answer:"+6"},
+{q:"Which of these is soluble in water?", options:["KNO3","AgCl","PbSO4","BaSO4"], answer:"KNO3"},
+{q:"Which gas is used in Haber process?", options:["N2","O2","H2","CO2"], answer:"N2"},
+{q:"Which of these is a weak acid?", options:["CH3COOH","HCl","H2SO4","HNO3"], answer:"CH3COOH"}
+],
+Biology:[
+{q:"Basic unit of life?", options:["Cell","Atom","Organ","Molecule"], answer:"Cell"},
+{q:"Green pigment in plants?", options:["Chlorophyll","Carotene","Protein","Glucose"], answer:"Chlorophyll"},
+{q:"Powerhouse of the cell is?", options:["Nucleus","Mitochondria","Ribosome","Chloroplast"], answer:"Mitochondria"},
+{q:"Genetic material of most organisms is?", options:["DNA","RNA","Protein","Lipid"], answer:"DNA"},
+{q:"Which blood cells fight infection?", options:["Red","White","Platelets","Plasma"], answer:"White"},
+{q:"The basic unit of life is?", options:["Atom","Cell","Organ","Tissue"], answer:"Cell"},
+{q:"Where photosynthesis mainly occurs?", options:["Root","Leaf","Stem","Flower"], answer:"Leaf"},
+{q:"Which pigment gives green color to plants?", options:["Chlorophyll","Carotene","Xanthophyll","Anthocyanin"], answer:"Chlorophyll"},
+{q:"Brain part controlling balance?", options:["Cerebellum","Cerebrum","Medulla","Spinal cord"], answer:"Cerebellum"},
+{q:"Carries oxygen in blood?", options:["Plasma","Red cells","White cells","Platelets"], answer:"Red cells"},
+{q:"Process of water movement through plants?", options:["Transpiration","Respiration","Photosynthesis","Excretion"], answer:"Transpiration"},
+{q:"Which organ produces insulin?", options:["Pancreas","Liver","Kidney","Heart"], answer:"Pancreas"},
+{q:"Which gas is released during photosynthesis?", options:["Oxygen","Carbon dioxide","Nitrogen","Hydrogen"], answer:"Oxygen"},
+{q:"Which organ filters blood?", options:["Kidney","Liver","Lung","Heart"], answer:"Kidney"},
+{q:"Which structure stores genetic information?", options:["Nucleus","Mitochondria","Ribosome","Golgi body"], answer:"Nucleus"},
+{q:"Which hormone regulates blood sugar?", options:["Insulin","Adrenaline","Thyroxine","Estrogen"], answer:"Insulin"},
+{q:"Which organisms make their own food?", options:["Autotrophs","Heterotrophs","Parasites","Decomposers"], answer:"Autotrophs"},
+{q:"Which structure helps in protein synthesis?", options:["Ribosome","Mitochondria","Nucleus","Lysosome"], answer:"Ribosome"},
+{q:"Which blood component helps in clotting?", options:["Platelets","Red cells","White cells","Plasma"], answer:"Platelets"},
+{q:"Which type of blood vessel carries blood to the heart?", options:["Veins","Arteries","Capillaries","Aorta"], answer:"Veins"},
+{q:"Which part of the brain controls voluntary actions?", options:["Cerebrum","Cerebellum","Medulla","Spinal cord"], answer:"Cerebrum"},
+{q:"Which process produces gametes?", options:["Meiosis","Mitosis","Fertilization","Pollination"], answer:"Meiosis"},
+{q:"Which kingdom includes bacteria?", options:["Monera","Protista","Fungi","Plantae"], answer:"Monera"},
+{q:"Which type of reproduction involves one parent?", options:["Asexual","Sexual","Fertilization","Pollination"], answer:"Asexual"},
+{q:"Which macromolecule stores genetic information?", options:["DNA","Protein","Lipid","Carbohydrate"], answer:"DNA"},
+{q:"Which organelle contains digestive enzymes?", options:["Lysosome","Ribosome","Chloroplast","Nucleus"], answer:"Lysosome"},
+{q:"Which hormone controls metabolism?", options:["Thyroxine","Adrenaline","Insulin","Estrogen"], answer:"Thyroxine"},
+{q:"Which cells are involved in immunity?", options:["White cells","Red cells","Platelets","Plasma cells"], answer:"White cells"},
+{q:"Which process releases energy from food?", options:["Respiration","Photosynthesis","Transpiration","Excretion"], answer:"Respiration"},
+{q:"Which type of joint allows free movement?", options:["Ball and socket","Hinge","Pivot","Fixed"], answer:"Ball and socket"},
+{q:"Which vitamin is synthesized in skin by sunlight?", options:["Vitamin D","Vitamin A","Vitamin C","Vitamin K"], answer:"Vitamin D"},
+{q:"Which organ stores bile?", options:["Gallbladder","Liver","Pancreas","Stomach"], answer:"Gallbladder"},
+{q:"Which macronutrient provides most energy?", options:["Carbohydrates","Proteins","Fats","Vitamins"], answer:"Fats"},
+{q:"Which process produces two identical daughter cells?", options:["Mitosis","Meiosis","Fertilization","Pollination"], answer:"Mitosis"},
+{q:"Which phylum do insects belong to?", options:["Arthropoda","Chordata","Mollusca","Annelida"], answer:"Arthropoda"},
+{q:"Which process releases water from leaves?", options:["Transpiration","Photosynthesis","Respiration","Excretion"], answer:"Transpiration"},
+{q:"Which organ stores urine temporarily?", options:["Urinary bladder","Kidney","Ureter","Urethra"], answer:"Urinary bladder"},
+{q:"Which blood cells are enucleated?", options:["Red cells","White cells","Platelets","Plasma cells"], answer:"Red cells"},
+{q:"Which process converts light energy to chemical energy?", options:["Photosynthesis","Respiration","Fermentation","Excretion"], answer:"Photosynthesis"},
+{q:"Which organelle is called 'protein factory'?", options:["Ribosome","Mitochondria","Golgi apparatus","Nucleus"], answer:"Ribosome"},
+{q:"Which hormone regulates stress response?", options:["Adrenaline","Insulin","Thyroxine","Estrogen"], answer:"Adrenaline"},
+{q:"Which part of neuron transmits impulses away?", options:["Axon","Dendrite","Cell body","Nucleus"], answer:"Axon"},
+{q:"Which type of blood transports oxygen?", options:["Red cells","White cells","Platelets","Plasma"], answer:"Red cells"},
+{q:"Which process occurs in chloroplast?", options:["Photosynthesis","Respiration","Fermentation","Excretion"], answer:"Photosynthesis"},
+{q:"Which structure separates plant cells?", options:["Cell wall","Cell membrane","Nucleus","Cytoplasm"], answer:"Cell wall"},
+{q:"Which organisms are decomposers?", options:["Fungi","Plants","Animals","Protists"], answer:"Fungi"},
+{q:"Which part of plant transports water?", options:["Xylem","Phloem","Leaf","Stem"], answer:"Xylem"},
+{q:"Which part of plant transports food?", options:["Phloem","Xylem","Leaf","Root"], answer:"Phloem"},
+{q:"Which process produces gametes with half chromosome number?", options:["Meiosis","Mitosis","Fertilization","Binary fission"], answer:"Meiosis"},
+{q:"Which organelle contains chlorophyll?", options:["Chloroplast","Mitochondria","Nucleus","Golgi apparatus"], answer:"Chloroplast"},
+{q:"Which hormone stimulates milk production?", options:["Prolactin","Insulin","Adrenaline","Thyroxine"], answer:"Prolactin"},
+{q:"Which type of RNA carries amino acids?", options:["tRNA","mRNA","rRNA","snRNA"], answer:"tRNA"},
+{q:"Which process involves fusion of gametes?", options:["Fertilization","Mitosis","Meiosis","Pollination"], answer:"Fertilization"},
+{q:"Which stage of mitosis involves alignment of chromosomes at the equator?", options:["Metaphase","Anaphase","Telophase","Prophase"], answer:"Metaphase"},
+{q:"Crossing over occurs during which stage of meiosis?", options:["Prophase I","Metaphase I","Anaphase II","Telophase I"], answer:"Prophase I"},
+{q:"Which tissue transports manufactured food in plants?", options:["Phloem","Xylem","Cambium","Cortex"], answer:"Phloem"},
+{q:"The functional unit of the kidney is?", options:["Nephron","Alveolus","Neuron","Glomerulus"], answer:"Nephron"},
+{q:"Which blood group is a universal donor?", options:["O","AB","A","B"], answer:"O"},
+{q:"Which blood group is universal recipient?", options:["AB","O","A","B"], answer:"AB"},
+{q:"Which organ detoxifies harmful substances in the body?", options:["Liver","Kidney","Heart","Lung"], answer:"Liver"},
+{q:"Which structure is responsible for gaseous exchange in humans?", options:["Alveoli","Bronchi","Trachea","Larynx"], answer:"Alveoli"},
+{q:"Which part of the eye controls amount of light entering?", options:["Iris","Lens","Retina","Cornea"], answer:"Iris"},
+{q:"Which disease is caused by Plasmodium?", options:["Malaria","Typhoid","Cholera","Tuberculosis"], answer:"Malaria"},
+{q:"Which vitamin deficiency causes rickets?", options:["Vitamin D","Vitamin A","Vitamin C","Vitamin K"], answer:"Vitamin D"},
+{q:"Which organelle is abundant in muscle cells?", options:["Mitochondria","Ribosome","Golgi body","Lysosome"], answer:"Mitochondria"},
+{q:"Which part of the flower develops into fruit?", options:["Ovary","Anther","Petal","Stigma"], answer:"Ovary"},
+{q:"Which structure in plants controls opening and closing of stomata?", options:["Guard cells","Epidermis","Xylem","Phloem"], answer:"Guard cells"},
+{q:"Which type of immunity is obtained from vaccination?", options:["Artificial active","Natural active","Artificial passive","Natural passive"], answer:"Artificial active"},
+{q:"Which component of blood transports hormones?", options:["Plasma","Red cells","White cells","Platelets"], answer:"Plasma"},
+{q:"Which organism belongs to phylum Annelida?", options:["Earthworm","Snail","Grasshopper","Tapeworm"], answer:"Earthworm"},
+{q:"Which structure supports plant cell shape?", options:["Cell wall","Cell membrane","Nucleus","Cytoplasm"], answer:"Cell wall"},
+{q:"Which process increases genetic variation?", options:["Mutation","Mitosis","Binary fission","Budding"], answer:"Mutation"},
+{q:"Which part of the ear maintains balance?", options:["Semicircular canals","Cochlea","Eardrum","Ossicles"], answer:"Semicircular canals"},
+{q:"Which hormone prepares the body for fight or flight?", options:["Adrenaline","Insulin","Thyroxine","Progesterone"], answer:"Adrenaline"},
+{q:"Which plant tissue is responsible for growth in thickness?", options:["Cambium","Xylem","Phloem","Epidermis"], answer:"Cambium"},
+{q:"Which process forms identical twins?", options:["Mitosis","Meiosis","Fertilization","Mutation"], answer:"Mitosis"},
+{q:"Which part of digestive system absorbs most nutrients?", options:["Small intestine","Large intestine","Stomach","Esophagus"], answer:"Small intestine"},
+{q:"Which mineral is essential for formation of hemoglobin?", options:["Iron","Calcium","Potassium","Sodium"], answer:"Iron"},
+{q:"Which organism is a primary consumer?", options:["Goat","Grass","Lion","Fungi"], answer:"Goat"},
+{q:"Which structure connects fetus to placenta?", options:["Umbilical cord","Amnion","Chorion","Yolk sac"], answer:"Umbilical cord"},
+{q:"Which enzyme breaks down starch into maltose?", options:["Amylase","Pepsin","Lipase","Trypsin"], answer:"Amylase"},
+{q:"Which level of organization is highest?", options:["Ecosystem","Population","Community","Organism"], answer:"Ecosystem"},
+{q:"Which gas is required for aerobic respiration?", options:["Oxygen","Carbon dioxide","Nitrogen","Hydrogen"], answer:"Oxygen"},
+{q:"Which plant hormone promotes cell elongation?", options:["Auxin","Cytokinin","Ethylene","Abscisic acid"], answer:"Auxin"},
+{q:"Which type of skeleton is found in insects?", options:["Exoskeleton","Endoskeleton","Hydrostatic","Cartilaginous"], answer:"Exoskeleton"},
+{q:"Which disease affects the immune system severely?", options:["HIV/AIDS","Malaria","Cholera","Typhoid"], answer:"HIV/AIDS"},
+{q:"Which organ produces bile?", options:["Liver","Pancreas","Gallbladder","Kidney"], answer:"Liver"},
+{q:"Which stage of respiration produces most ATP?", options:["Electron transport chain","Glycolysis","Krebs cycle","Fermentation"], answer:"Electron transport chain"},
+{q:"Which genetic cross gives 1:1 ratio?", options:["Test cross","Monohybrid cross","Dihybrid cross","Back cross"], answer:"Test cross"},
+{q:"Which structure protects the brain?", options:["Skull","Spinal cord","Ribs","Vertebrae"], answer:"Skull"},
+{q:"Which structure is site of protein synthesis?", options:["Ribosome","Mitochondria","Chloroplast","Nucleus"], answer:"Ribosome"},
+{q:"Which organism performs nitrogen fixation?", options:["Rhizobium","Plasmodium","Amoeba","Yeast"], answer:"Rhizobium"},
+{q:"Which type of pollination occurs within same flower?", options:["Self pollination","Cross pollination","Wind pollination","Insect pollination"], answer:"Self pollination"},
+{q:"Which organ regulates body temperature?", options:["Skin","Heart","Kidney","Liver"], answer:"Skin"},
+{q:"Which part of neuron receives impulses?", options:["Dendrite","Axon","Myelin sheath","Synapse"], answer:"Dendrite"},
+{q:"Which deficiency causes scurvy?", options:["Vitamin C","Vitamin A","Vitamin D","Vitamin K"], answer:"Vitamin C"},
+{q:"Which blood vessel has thick muscular walls?", options:["Artery","Vein","Capillary","Venule"], answer:"Artery"},
+{q:"Which kingdom includes mushrooms?", options:["Fungi","Plantae","Animalia","Protista"], answer:"Fungi"},
+{q:"Which ecological term describes organisms of same species in area?", options:["Population","Community","Ecosystem","Habitat"], answer:"Population"},
+{q:"Which process converts glucose to pyruvate?", options:["Glycolysis","Krebs cycle","Fermentation","Photosynthesis"], answer:"Glycolysis"},
+{q:"Which type of teeth are used for grinding?", options:["Molars","Incisors","Canines","Premolars"], answer:"Molars"},
+{q:"Which structure forms spindle fibers during cell division?", options:["Centrioles","Ribosomes","Lysosomes","Vacuoles"], answer:"Centrioles"},
+{q:"Which factor can cause evolution?", options:["Natural selection","Respiration","Transpiration","Digestion"], answer:"Natural selection"}
+],
+Geography : [
+  {q:"The Earth rotates from:", options:["West to East","East to West","North to South","South to North"], answer:"West to East"},
+{q:"The Tropic of Cancer is located at:", options:["23½°N","23½°S","66½°N","0°"], answer:"23½°N"},
+{q:"A line joining places of equal rainfall is called:", options:["Isohyet","Isobar","Isotherm","Contour"], answer:"Isohyet"},
+{q:"The longest river in Africa is:", options:["Nile","Niger","Congo","Zambezi"], answer:"Nile"},
+{q:"Which soil is best for cotton cultivation?", options:["Black soil","Laterite","Podzol","Alluvial"], answer:"Black soil"},
+{q:"The imaginary line dividing the earth into two equal halves is:", options:["Equator","Prime Meridian","Tropic of Capricorn","Arctic Circle"], answer:"Equator"},
+{q:"The instrument used to measure atmospheric pressure is:", options:["Barometer","Thermometer","Hygrometer","Rain gauge"], answer:"Barometer"},
+{q:"Which rock type is formed from molten magma?", options:["Igneous","Sedimentary","Metamorphic","Organic"], answer:"Igneous"},
+{q:"Weathering caused by temperature change is:", options:["Physical","Chemical","Biological","Organic"], answer:"Physical"},
+{q:"The largest ocean in the world is:", options:["Pacific","Atlantic","Indian","Arctic"], answer:"Pacific"},
+{q:"An area drained by a river and its tributaries is called:", options:["Basin","Delta","Watershed","Floodplain"], answer:"Basin"},
+{q:"Which layer of the atmosphere contains ozone layer?", options:["Stratosphere","Troposphere","Mesosphere","Thermosphere"], answer:"Stratosphere"},
+{q:"The force that deflects winds due to Earth rotation is:", options:["Coriolis force","Gravity","Friction","Centrifugal force"], answer:"Coriolis force"},
+{q:"Which type of rainfall is common in equatorial region?", options:["Convectional","Relief","Cyclonic","Frontal"], answer:"Convectional"},
+{q:"Which continent has the largest population?", options:["Asia","Africa","Europe","South America"], answer:"Asia"},
+{q:"Scale 1:50,000 means:", options:["1 cm = 50,000 cm","1 km = 50 km","1 cm = 50 km","1 mm = 50 km"], answer:"1 cm = 50,000 cm"},
+{q:"A V-shaped valley is formed by:", options:["River erosion","Glaciation","Wind erosion","Wave action"], answer:"River erosion"},
+{q:"Which soil is common in tropical rainforest?", options:["Laterite","Podzol","Chernozem","Tundra"], answer:"Laterite"},
+{q:"The Greenwich Meridian is located at:", options:["0° longitude","0° latitude","23½°N","180°"], answer:"0° longitude"},
+{q:"Which mineral is used in production of cement?", options:["Limestone","Coal","Gold","Iron"], answer:"Limestone"},
+{q:"A narrow strip of land connecting two larger lands is:", options:["Isthmus","Strait","Peninsula","Cape"], answer:"Isthmus"},
+{q:"Which type of climate has hot wet and dry seasons?", options:["Tropical savanna","Mediterranean","Tundra","Desert"], answer:"Tropical savanna"},
+{q:"Population density is calculated as:", options:["Population/Area","Area/Population","Birth rate/Death rate","Migration/Area"], answer:"Population/Area"},
+{q:"The largest desert in the world is:", options:["Sahara","Kalahari","Gobi","Arabian"], answer:"Sahara"},
+{q:"Contour lines close together indicate:", options:["Steep slope","Gentle slope","Flat land","Valley"], answer:"Steep slope"},
+{q:"Which industry uses bulky raw materials?", options:["Heavy industry","Light industry","Cottage industry","Service industry"], answer:"Heavy industry"},
+{q:"Which wind blows from land to sea at night?", options:["Land breeze","Sea breeze","Trade wind","Monsoon"], answer:"Land breeze"},
+{q:"A deep narrow sea inlet formed by glaciation is:", options:["Fjord","Delta","Lagoon","Estuary"], answer:"Fjord"},
+{q:"Which country produces largest crude oil in Africa?", options:["Nigeria","Algeria","Libya","Angola"], answer:"Nigeria"},
+{q:"Which farming system involves growing crops for sale?", options:["Commercial farming","Subsistence farming","Shifting cultivation","Pastoralism"], answer:"Commercial farming"},
+{q:"The main cause of tides is:", options:["Moon gravity","Sun heat","Wind","Earth rotation"], answer:"Moon gravity"},
+{q:"Which type of rock contains fossils?", options:["Sedimentary","Igneous","Metamorphic","Volcanic"], answer:"Sedimentary"},
+{q:"The capital of Ghana is:", options:["Accra","Lagos","Abuja","Kumasi"], answer:"Accra"},
+{q:"A wide river mouth with tidal influence is:", options:["Estuary","Delta","Fjord","Lagoon"], answer:"Estuary"},
+{q:"Which method is used to measure rainfall?", options:["Rain gauge","Thermometer","Barometer","Anemometer"], answer:"Rain gauge"},
+{q:"Which factor affects climate most?", options:["Latitude","Religion","Language","Culture"], answer:"Latitude"},
+{q:"The most populated country in Africa is:", options:["Nigeria","Egypt","Ethiopia","Kenya"], answer:"Nigeria"},
+{q:"A rock changed by heat and pressure is:", options:["Metamorphic","Igneous","Sedimentary","Organic"], answer:"Metamorphic"},
+{q:"Which transport is cheapest for bulky goods?", options:["Water","Air","Road","Rail"], answer:"Water"},
+{q:"The imaginary line at 180° longitude is:", options:["International Date Line","Prime Meridian","Equator","Tropic of Capricorn"], answer:"International Date Line"},
+{q:"Which soil is formed by river deposits?", options:["Alluvial","Laterite","Podzol","Desert soil"], answer:"Alluvial"},
+{q:"Which region has Mediterranean climate?", options:["Southern Europe","Central Africa","Northern Russia","Amazon Basin"], answer:"Southern Europe"},
+{q:"The main occupation in Niger Delta is:", options:["Oil exploration","Mining coal","Tea farming","Cattle rearing"], answer:"Oil exploration"},
+{q:"Which type of erosion is caused by wind?", options:["Deflation","Hydraulic action","Abrasion by water","Solution"], answer:"Deflation"},
+{q:"Which part of Nigeria produces cocoa mostly?", options:["Southwest","Northeast","Northwest","Northcentral"], answer:"Southwest"},
+{q:"The movement of people from rural to urban areas is:", options:["Rural-urban migration","Urban drift","Emigration","Immigration"], answer:"Rural-urban migration"},
+{q:"Which ocean current is warm?", options:["Gulf Stream","Labrador","Canary","Benguela"], answer:"Gulf Stream"},
+{q:"Which factor leads to desertification?", options:["Overgrazing","Heavy rainfall","Afforestation","Flooding"], answer:"Overgrazing"},
+{q:"Which type of map shows relief using contour lines?", options:["Topographical","Political","Road","Atlas"], answer:"Topographical"},
+{q:"Which sector of economy involves extraction of raw materials?", options:["Primary","Secondary","Tertiary","Quaternary"], answer:"Primary"},
+  {q:"If a map scale is 1:100,000, what is 5cm on the map in reality?", options:["5 km","50 km","0.5 km","500 km"], answer:"5 km"},
+  {q:"The difference between the highest and lowest points in an area is called:", options:["Relief","Altitude","Gradient","Depression"], answer:"Relief"},
+  {q:"A line joining places of equal temperature is:", options:["Isotherm","Isohyet","Isobar","Contour"], answer:"Isotherm"},
+  {q:"Which type of rainfall occurs when warm air rises over mountains?", options:["Relief rainfall","Convectional rainfall","Cyclonic rainfall","Frontal rainfall"], answer:"Relief rainfall"},
+  {q:"The speed of wind is measured using:", options:["Anemometer","Wind vane","Barometer","Thermometer"], answer:"Anemometer"},
+  {q:"Which latitude is known as the Arctic Circle?", options:["66½°N","23½°N","66½°S","0°"], answer:"66½°N"},
+  {q:"Which natural resource is renewable?", options:["Forest","Coal","Petroleum","Natural gas"], answer:"Forest"},
+  {q:"Which farming system involves shifting cultivation?", options:["Bush fallowing","Plantation farming","Mixed farming","Mechanized farming"], answer:"Bush fallowing"},
+  {q:"Which Nigerian city is known for tin mining?", options:["Jos","Enugu","Kaduna","Ibadan"], answer:"Jos"},
+  {q:"The meeting point of two air masses is called:", options:["Front","Eye","Isobar","Trough"], answer:"Front"},
+  {q:"Which type of vegetation is found in Sudan savanna?", options:["Short grasses and scattered trees","Dense tall trees","Mangrove swamp","Tundra moss"], answer:"Short grasses and scattered trees"},
+  {q:"Which river flows into Lake Chad?", options:["River Chari","River Niger","River Benue","River Congo"], answer:"River Chari"},
+  {q:"Which industry converts raw materials into finished goods?", options:["Secondary industry","Primary industry","Tertiary industry","Quaternary industry"], answer:"Secondary industry"},
+  {q:"A narrow water body separating two land masses is:", options:["Strait","Isthmus","Peninsula","Cape"], answer:"Strait"},
+  {q:"Which factor influences soil formation most?", options:["Climate","Religion","Language","Population"], answer:"Climate"},
+  {q:"Which type of climate has dry summers and wet winters?", options:["Mediterranean","Equatorial","Savanna","Desert"], answer:"Mediterranean"},
+  {q:"Which region of Nigeria experiences harmattan?", options:["Northern Nigeria","Coastal Nigeria","Niger Delta","Southwest only"], answer:"Northern Nigeria"},
+  {q:"Which continent is entirely in the Southern Hemisphere?", options:["Australia","Africa","Europe","Asia"], answer:"Australia"},
+  {q:"A triangular deposit at river mouth is:", options:["Delta","Estuary","Lagoon","Fjord"], answer:"Delta"},
+  {q:"Which soil type is suitable for rice farming?", options:["Alluvial","Laterite","Desert","Podzol"], answer:"Alluvial"},
+  {q:"Which ocean current is cold?", options:["Canary Current","Gulf Stream","Kuroshio","Brazil Current"], answer:"Canary Current"},
+  {q:"Which type of settlement is common in farming areas?", options:["Dispersed","Nucleated","Linear","Urban"], answer:"Dispersed"},
+  {q:"Which process breaks rocks chemically?", options:["Solution","Abrasion","Attrition","Hydraulic action"], answer:"Solution"},
+  {q:"Which region in Nigeria is known for coal mining?", options:["Enugu","Jos","Lagos","Kano"], answer:"Enugu"},
+  {q:"Which transport is fastest?", options:["Air","Road","Rail","Water"], answer:"Air"},
+  {q:"Which climate supports cocoa farming?", options:["Equatorial","Desert","Tundra","Mediterranean"], answer:"Equatorial"},
+  {q:"Which factor leads to urbanization?", options:["Industrialization","Afforestation","Desertification","Glaciation"], answer:"Industrialization"},
+  {q:"Which river is the longest in West Africa?", options:["River Niger","River Volta","River Senegal","River Gambia"], answer:"River Niger"},
+  {q:"Which map shows political boundaries?", options:["Political map","Topographical map","Relief map","Road map"], answer:"Political map"},
+  {q:"Which economic activity belongs to tertiary sector?", options:["Banking","Mining","Farming","Fishing"], answer:"Banking"},
+  {q:"Which wind blows towards the equator?", options:["Trade wind","Westerlies","Monsoon","Hurricane"], answer:"Trade wind"},
+  {q:"Which type of rock is marble?", options:["Metamorphic","Igneous","Sedimentary","Volcanic"], answer:"Metamorphic"},
+  {q:"Which gas contributes most to global warming?", options:["Carbon dioxide","Oxygen","Nitrogen","Hydrogen"], answer:"Carbon dioxide"},
+  {q:"Which part of Nigeria has mangrove vegetation?", options:["Niger Delta","Jos Plateau","Sudan savanna","Sahel"], answer:"Niger Delta"},
+  {q:"Which soil is formed under desert conditions?", options:["Desert soil","Alluvial","Laterite","Podzol"], answer:"Desert soil"},
+  {q:"Which line divides day and night on the earth?", options:["Circle of illumination","Equator","Prime Meridian","Tropic of Capricorn"], answer:"Circle of illumination"},
+  {q:"Which farming involves one crop grown on large scale?", options:["Plantation farming","Mixed farming","Subsistence farming","Nomadic farming"], answer:"Plantation farming"},
+  {q:"Which mineral resource is found in Oloibiri?", options:["Petroleum","Coal","Tin","Iron ore"], answer:"Petroleum"},
+  {q:"Which population pyramid shows high birth rate?", options:["Expansive","Constrictive","Stationary","Balanced"], answer:"Expansive"},
+  {q:"Which factor affects distribution of industries?", options:["Raw materials","Religion","Language","Culture"], answer:"Raw materials"},
+  {q:"Which type of erosion forms mushroom rocks?", options:["Wind erosion","River erosion","Glacial erosion","Wave erosion"], answer:"Wind erosion"},
+  {q:"Which climate is characterized by low rainfall and high temperature?", options:["Desert","Equatorial","Mediterranean","Tundra"], answer:"Desert"},
+  {q:"Which Nigerian river joins River Niger at Lokoja?", options:["River Benue","River Ogun","River Osun","River Cross"], answer:"River Benue"},
+  {q:"Which sector provides services?", options:["Tertiary","Primary","Secondary","Agricultural"], answer:"Tertiary"},
+  {q:"Which measurement shows height above sea level?", options:["Altitude","Latitude","Longitude","Gradient"], answer:"Altitude"},
+  {q:"Which force pulls objects toward the center of the earth?", options:["Gravity","Magnetism","Friction","Pressure"], answer:"Gravity"},
+  {q:"Which type of vegetation is found in Sahel region?", options:["Sparse grasses and shrubs","Dense forest","Mangrove","Tundra"], answer:"Sparse grasses and shrubs"},
+  {q:"Which region produces groundnut in Nigeria?", options:["Northern Nigeria","Niger Delta","Southwest","Southeast"], answer:"Northern Nigeria"},
+  {q:"Which time difference exists between 0° and 15°E longitude?", options:["1 hour","2 hours","30 minutes","15 minutes"], answer:"1 hour"},
+  {q:"Which factor determines local time?", options:["Longitude","Latitude","Altitude","Relief"], answer:"Longitude"},
+],
+ Computer:[
+  {q:"Which device is used to store data permanently?", options:["Hard disk","RAM","Cache","CPU"], answer:"Hard disk"},
+  {q:"Which of the following is an input device?", options:["Keyboard","Monitor","Printer","Speaker"], answer:"Keyboard"},
+  {q:"Which is a high-level programming language?", options:["Python","Assembly","Machine code","Binary"], answer:"Python"},
+  {q:"Which is used to connect a computer to the internet?", options:["Modem","Printer","Scanner","Monitor"], answer:"Modem"},
+  {q:"The brain of the computer is:", options:["CPU","RAM","Hard disk","Keyboard"], answer:"CPU"},
+  {q:"Which memory is volatile?", options:["RAM","ROM","Hard disk","Flash drive"], answer:"RAM"},
+  {q:"Which is NOT an operating system?", options:["Windows","Linux","Python","MacOS"], answer:"Python"},
+  {q:"What does GUI stand for?", options:["Graphical User Interface","General User Input","Graphics Under Internet","Global User Interface"], answer:"Graphical User Interface"},
+  {q:"Which device prints text and graphics on paper?", options:["Printer","Scanner","Monitor","Keyboard"], answer:"Printer"},
+  {q:"Which of these is used to store large amounts of data externally?", options:["External hard drive","RAM","Cache","CPU"], answer:"External hard drive"},
+  {q:"Which is the smallest unit of data in a computer?", options:["Bit","Byte","Word","Nibble"], answer:"Bit"},
+  {q:"1 KB equals how many bytes?", options:["1024","1000","2048","512"], answer:"1024"},
+  {q:"Which protocol is used to browse websites?", options:["HTTP","FTP","SMTP","POP3"], answer:"HTTP"},
+  {q:"Which type of software helps run computer hardware?", options:["System software","Application software","Utility software","Database software"], answer:"System software"},
+  {q:"Which of these is an example of application software?", options:["MS Word","Linux","BIOS","Device driver"], answer:"MS Word"},
+  {q:"The process of finding and fixing errors in a program is called:", options:["Debugging","Compiling","Executing","Interpreting"], answer:"Debugging"},
+  {q:"Which language is used to style web pages?", options:["CSS","HTML","Python","C++"], answer:"CSS"},
+  {q:"Which of the following is NOT a programming paradigm?", options:["Procedural","Object-oriented","Declarative","Mechanical"], answer:"Mechanical"},
+  {q:"Which storage is fastest?", options:["Cache","Hard disk","CD-ROM","Flash drive"], answer:"Cache"},
+  {q:"Which is a type of non-volatile memory?", options:["ROM","RAM","Cache","Registers"], answer:"ROM"},
+  {q:"Which of these is an example of cloud storage?", options:["Google Drive","RAM","ROM","Cache"], answer:"Google Drive"},
+  {q:"Which HTML tag is used to create a hyperlink?", options:["<a>","<link>","<href>","<url>"], answer:"<a>"},
+  {q:"Which of these is used to translate high-level code to machine code?", options:["Compiler","Interpreter","Assembler","Debugger"], answer:"Compiler"},
+  {q:"Which is NOT a database management system?", options:["MySQL","Oracle","Windows","MongoDB"], answer:"Windows"},
+  {q:"Which algorithm is used to search sorted data efficiently?", options:["Binary search","Linear search","Bubble sort","Merge sort"], answer:"Binary search"},
+  {q:"Which network topology has all nodes connected to a central node?", options:["Star","Ring","Bus","Mesh"], answer:"Star"},
+  {q:"Which layer of the OSI model is responsible for routing?", options:["Network","Transport","Session","Data link"], answer:"Network"},
+  {q:"Which command deletes a file in Linux?", options:["rm","del","erase","delete"], answer:"rm"},
+  {q:"Which is NOT a type of software license?", options:["GPL","MIT","Proprietary","HTML"], answer:"HTML"},
+  {q:"Which of these is an example of an output device?", options:["Monitor","Keyboard","Mouse","Scanner"], answer:"Monitor"},
+  {q:"Which HTML tag is used for headings?", options:["<h1>","<p>","<div>","<span>"], answer:"<h1>"},
+  {q:"Which is used to check spelling in a document?", options:["Spell checker","Debugger","Compiler","Interpreter"], answer:"Spell checker"},
+  {q:"Which of these is a low-level language?", options:["Assembly","Python","Java","C#"], answer:"Assembly"},
+  {q:"Which device is required to connect multiple computers in a network?", options:["Switch","Printer","Monitor","Keyboard"], answer:"Switch"},
+  {q:"Which layer in OSI ensures error-free delivery?", options:["Transport","Network","Physical","Session"], answer:"Transport"},
+  {q:"Which virus replicates without user interaction?", options:["Worm","Trojan","Spyware","Adware"], answer:"Worm"},
+  {q:"Which tag is used for inserting an image in HTML?", options:["<img>","<image>","<pic>","<src>"], answer:"<img>"},
+  {q:"Which protocol is used to send emails?", options:["SMTP","FTP","HTTP","POP3"], answer:"SMTP"},
+  {q:"Which storage type is best for temporary data?", options:["RAM","ROM","Hard disk","Flash drive"], answer:"RAM"},
+  {q:"Which is NOT a type of computer network?", options:["Quantum network","LAN","WAN","MAN"], answer:"Quantum network"},
+  {q:"Which device converts digital signals to analog signals?", options:["Modem","Router","Switch","Hub"], answer:"Modem"},
+  {q:"Which is a common IP version in use today?", options:["IPv4","IPv2","IPv1","IPv3"], answer:"IPv4"},
+  {q:"Which loop runs at least once regardless of the condition?", options:["Do-while","While","For","For-each"], answer:"Do-while"},
+  {q:"Which of these is a Boolean data type value?", options:["True","String","Integer","Float"], answer:"True"},
+  {q:"Which device controls data flow between computer and network?", options:["NIC","CPU","RAM","ROM"], answer:"NIC"},
+  {q:"Which technology allows computers to share resources over a distance?", options:["Networking","Cloud computing","Database","AI"], answer:"Networking"},
+  {q:"Which software helps prevent malware attacks?", options:["Antivirus","Word processor","Compiler","Debugger"], answer:"Antivirus"},
+  {q:"Which of these is a table in relational databases?", options:["Relation","Row","Column","Field"], answer:"Relation"},
+  {q:"Which programming construct repeats tasks automatically?", options:["Loop","Function","Variable","Array"], answer:"Loop"},
+  {q:"Which key combination is used to copy in most computers?", options:["Ctrl+C","Ctrl+V","Ctrl+X","Ctrl+Z"], answer:"Ctrl+C"},
+  {q:"Which algorithm is best for sorting small data sets?", options:["Bubble sort","Merge sort","Quick sort","Heap sort"], answer:"Bubble sort"},
+  {q:"Which protocol transfers files between computers?", options:["FTP","HTTP","SMTP","POP3"], answer:"FTP"},
+  {q:"Which device is used to connect multiple networks together?", options:["Router","Switch","Hub","Modem"], answer:"Router"},
+  {q:"Which is a type of malware that demands ransom?", options:["Ransomware","Spyware","Adware","Worm"], answer:"Ransomware"},
+  {q:"Which data type stores true or false values?", options:["Boolean","Integer","String","Float"], answer:"Boolean"},
+  {q:"Which component performs arithmetic operations?", options:["ALU","CPU","RAM","ROM"], answer:"ALU"},
+  {q:"Which protocol is used for secure web browsing?", options:["HTTPS","HTTP","FTP","SMTP"], answer:"HTTPS"},
+  {q:"Which of these is a volatile storage?", options:["RAM","ROM","Flash","Hard disk"], answer:"RAM"},
+  {q:"Which loop continues while a condition is true?", options:["While","Do-while","For","Foreach"], answer:"While"},
+  {q:"Which software is used to browse the internet?", options:["Browser","Compiler","Debugger","IDE"], answer:"Browser"},
+  {q:"Which tag is used to create a table in HTML?", options:["<table>","<tr>","<td>","<th>"], answer:"<table>"},
+  {q:"Which type of memory is permanent and non-volatile?", options:["ROM","RAM","Cache","Registers"], answer:"ROM"},
+  {q:"Which algorithm is used for encrypting data?", options:["AES","Binary search","Bubble sort","Merge sort"], answer:"AES"},
+  {q:"Which device regulates the flow of electricity to a computer?", options:["Power supply","CPU","RAM","Motherboard"], answer:"Power supply"},
+  {q:"Which tag in HTML is used for paragraph text?", options:["<p>","<h1>","<div>","<span>"], answer:"<p>"},
+  {q:"Which loop executes a fixed number of times?", options:["For","While","Do-while","Foreach"], answer:"For"},
+  {q:"Which is a primary function of an operating system?", options:["Manage hardware","Compile code","Run browser","Edit text"], answer:"Manage hardware"},
+  {q:"Which storage device uses optical media?", options:["CD-ROM","Hard disk","RAM","ROM"], answer:"CD-ROM"},
+  {q:"Which programming language is used for web page structure?", options:["HTML","CSS","Python","C++"], answer:"HTML"},
+  {q:"Which protocol is used to send emails from client to server?", options:["SMTP","FTP","HTTP","POP3"], answer:"SMTP"},
+  {q:"Which component is responsible for rendering images on the screen?", options:["GPU","CPU","RAM","ROM"], answer:"GPU"},
+  {q:"Which of these is NOT a database type?", options:["HTML","Relational","NoSQL","Graph"], answer:"HTML"},
+  {q:"Which is a high-level compiled language?", options:["C","Assembly","Machine code","Binary"], answer:"C"},
+  {q:"Which storage is used to hold CPU instructions temporarily?", options:["Cache","Hard disk","ROM","Flash"], answer:"Cache"},
+  {q:"Which is the main function of DNS?", options:["Translate domain names to IP addresses","Send emails","Store files","Compile code"], answer:"Translate domain names to IP addresses"},
+  {q:"Which is used to prevent unauthorized access to a network?", options:["Firewall","Router","Switch","Hub"], answer:"Firewall"},
+  {q:"Which tag is used to make text bold in HTML?", options:["<b>","<i>","<u>","<strong>"], answer:"<b>"},
+  {q:"Which is the secondary memory?", options:["Hard disk","RAM","Cache","Registers"], answer:"Hard disk"},
+  {q:"Which device converts digital signals to analog signals?", options:["Modem","Router","Switch","Hub"], answer:"Modem"},
+  {q:"Which is used to detect errors in data transmission?", options:["Parity bit","Checksum","Flow control","All of these"], answer:"All of these"},
+  {q:"Which algorithm is used to sort data efficiently?", options:["Quick sort","Linear search","Binary search","Selection"], answer:"Quick sort"},
+  {q:"Which type of network covers a small area?", options:["LAN","WAN","MAN","Internet"], answer:"LAN"},
+  {q:"Which device connects computers to a network wirelessly?", options:["Wireless Access Point","Router","Switch","Hub"], answer:"Wireless Access Point"},
+  {q:"Which programming construct stores multiple values?", options:["Array","Variable","Loop","Function"], answer:"Array"},
+  {q:"Which protocol is used for secure file transfer?", options:["SFTP","FTP","HTTP","SMTP"], answer:"SFTP"},
+  {q:"Which HTML tag is used for headings?", options:["<h1>","<p>","<div>","<span>"], answer:"<h1>"},
+  {q:"Which is an example of secondary storage?", options:["Hard disk","RAM","Cache","Registers"], answer:"Hard disk"},
+  {q:"Which logic gate outputs 1 only if both inputs are 1?", options:["AND","OR","NOT","XOR"], answer:"AND"},
+  {q:"Which programming paradigm focuses on objects?", options:["Object-oriented","Procedural","Functional","Declarative"], answer:"Object-oriented"},
+  {q:"Which device regulates the flow of data in a network?", options:["Router","Switch","Hub","Modem"], answer:"Router"},
+  {q:"Which type of malware disguises as legitimate software?", options:["Trojan horse","Virus","Worm","Spyware"], answer:"Trojan horse"},
+  {q:"Which HTML attribute specifies an image source?", options:["src","href","alt","title"], answer:"src"},
+  {q:"Which software converts code to machine language?", options:["Compiler","Debugger","Interpreter","Browser"], answer:"Compiler"},
+  {q:"Which storage is fastest for CPU access?", options:["Cache","RAM","Hard disk","SSD"], answer:"Cache"},
+  {q:"Which type of IP address is used in a local network?", options:["Private","Public","Dynamic","Static"], answer:"Private"},
+  {q:"Which is a type of non-volatile memory?", options:["ROM","RAM","Cache","Registers"], answer:"ROM"},
+  {q:"Which HTML tag is used to create an unordered list?", options:["<ul>","<ol>","<li>","<dl>"], answer:"<ul>"},
+  {q:"Which database uses tables with rows and columns?", options:["Relational","Graph","Document","Key-value"], answer:"Relational"},
+  {q:"Which type of loop may not execute if the condition is false initially?", options:["While","Do-while","For-each","Repeat"], answer:"While"},
+  {q:"Which protocol is used to receive emails?", options:["POP3","SMTP","HTTP","FTP"], answer:"POP3"},
+  {q:"Which programming language is mostly used for AI and machine learning?", options:["Python","C","Java","Assembly"], answer:"Python"},
+  {q:"Which network device amplifies signals for long-distance transmission?", options:["Repeater","Router","Switch","Hub"], answer:"Repeater"},
+  {q:"Which storage medium uses flash memory?", options:["USB drive","Hard disk","CD-ROM","Magnetic tape"], answer:"USB drive"},
+ ],
+ FurtherMath:[
+  {q:"If \(f(x) = 2x^3 - 5x + 1\), find \(f'(x)\).", options:["6x^2 - 5","2x^2 - 5","6x - 5","3x^2 - 5"], answer:"6x^2 - 5"},
+  {q:"Solve for x: \(2x^2 - 7x + 3 = 0\).", options:["x=1 or 1.5","x=3 or 0.5","x=-1 or 1.5","x=1 or 3"], answer:"x=1 or 1.5"},
+  {q:"Evaluate \(\int (3x^2 - 2x) dx\).", options:["x^3 - x^2 + C","x^3 - x + C","3x - 2 + C","x^3 - 2x + C"], answer:"x^3 - x^2 + C"},
+  {q:"Find the sum of the first 10 terms of the AP: 2, 5, 8,...", options:["140","120","110","150"], answer:"140"},
+  {q:"If \(a_n = 3n - 2\), what is \(a_15\)?", options:["43","45","44","42"], answer:"43"},
+  {q:"Simplify \((x^2y^3)^2\).", options:["x^4y^6","x^2y^6","x^4y^3","x^6y^4"], answer:"x^4y^6"},
+  {q:"Solve the matrix equation: \(\begin{bmatrix}2 & 3\\1 & 4\end{bmatrix}X = \begin{bmatrix}5\\6\end{bmatrix}\)", options:["X=[[1],[1]]","X=[[2],[1]]","X=[[1],[2]]","X=[[2],[2]]"], answer:"X=[[1],[1]]"},
+  {q:"Find the derivative of \(\sin(x^2)\).", options:["2x cos(x^2)","cos(x^2)","2 cos(x^2)","x cos(x^2)"], answer:"2x cos(x^2)"},
+  {q:"If \(\log_2 x = 5\), find x.", options:["32","25","16","64"], answer:"32"},
+  {q:"Solve: \(e^{2x} = 7\).", options:["x=ln7/2","x=ln7","x=2ln7","x=ln7/4"], answer:"x=ln7/2"},
+  {q:"Find the determinant of \(\begin{bmatrix}1 & 2\\3 & 4\end{bmatrix}\).", options:["-2","2","1","-1"], answer:"-2"},
+  {q:"If \(y = ln(x^2 +1)\), find dy/dx.", options:["2x/(x^2+1)","1/(x^2+1)","x/(x^2+1)","2/(x^2+1)"], answer:"2x/(x^2+1)"},
+  {q:"Find the integral \(\int 1/x dx\).", options:["ln|x| + C","1/x + C","x + C","x^2 + C"], answer:"ln|x| + C"},
+  {q:"Find the solution to the differential equation dy/dx = 3y.", options:["y = Ce^{3x}","y = 3Ce^x","y = Ce^{x}","y = 3e^x"], answer:"y = Ce^{3x}"},
+  {q:"Solve for x: \(x^3 - 27 = 0\).", options:["x=3","x=9","x=1","x=-3"], answer:"x=3"},
+  {q:"If vectors a = 2i + j, b = i - 3j, find a•b.", options:["-1","5","0","7"], answer:"-1"},
+  {q:"Find the sum of the infinite geometric series: 8 + 4 + 2 + ...", options:["16","14","12","10"], answer:"16"},
+  {q:"Find the inverse of the function f(x) = 3x + 2.", options:["f⁻¹(x) = (x-2)/3","f⁻¹(x) = 3x-2","f⁻¹(x) = 2x+3","f⁻¹(x) = x/3+2"], answer:"f⁻¹(x) = (x-2)/3"},
+  {q:"Find the coefficient of x^3 in (2x + 3)^4.", options:["32","54","72","108"], answer:"108"},
+  {q:"Solve the system: 2x + y = 5, x - y = 1.", options:["x=2, y=1","x=1, y=3","x=2, y=-1","x=3, y=-1"], answer:"x=2, y=1"},
+  {q:"Find the area under y = x^2 from x=0 to x=3.", options:["9","27","18","12"], answer:"9"},
+  {q:"If a=2, b=3, c=-5, find the discriminant of ax^2+bx+c=0.", options:["49","25","36","16"], answer:"49"},
+  {q:"Find the 5th term of the sequence a_n = 2n + 1.", options:["11","10","12","9"], answer:"11"},
+  {q:"Solve for x: sin(x) = 1/2.", options:["x=30°","x=45°","x=60°","x=90°"], answer:"x=30°"},
+  {q:"If A = {1,2,3} and B = {2,3,4}, find A ∩ B.", options:["{2,3}","{1,2}","{1,4}","{3,4}"], answer:"{2,3}"},
+  {q:"Find the next term: 2, 6, 12, 20,...", options:["30","24","28","32"], answer:"30"},
+  {q:"If f(x) = x^2 - 4x + 3, find f(2).", options:["-1","1","0","2"], answer:"-1"},
+  {q:"The sum of angles in a triangle is?", options:["180°","90°","360°","270°"], answer:"180°"},
+  {q:"Find derivative of y = e^x.", options:["e^x","x","1","0"], answer:"e^x"},
+  {q:"If the mean of 5 numbers is 12, find the total sum.", options:["60","50","55","65"], answer:"60"},
+  {q:"Find x if 3x - 7 = 2.", options:["3","2","1","5"], answer:"3"},
+  {q:"If vectors u = i + 2j, v = 3i - j, find u × v (magnitude in 2D).", options:["7","5","4","6"], answer:"7"},
+  {q:"Solve log(x) + log(2) = 1.", options:["x=5","x=4","x=2","x=3"], answer:"x=5"},
+  {q:"The general term of an AP: a_n = 3n + 2, find a_10.", options:["32","30","28","34"], answer:"32"},
+  {q:"Evaluate \(\int_0^2 2x dx\).", options:["4","2","6","8"], answer:"4"},
+  {q:"Find the sum: 1 + 2 + 3 + ... + 20.", options:["210","200","190","220"], answer:"210"},
+  {q:"If f(x) = 2x -1, find f⁻¹(5).", options:["3","2","4","1"], answer:"3"},
+  {q:"Find the roots of x^2 - 9 = 0.", options:["x=3,-3","x=3,3","x=-3,-3","x=0,3"], answer:"x=3,-3"},
+  {q:"If A = {x | x is even, x ≤ 10}, find n(A).", options:["5","6","4","3"], answer:"5"},
+  {q:"Find the area of triangle with base 6cm, height 4cm.", options:["12","10","14","16"], answer:"12"},
+  {q:"Differentiate y = ln(x).", options:["1/x","x","ln(x)","e^x"], answer:"1/x"},
+  {q:"Solve 2^x = 16.", options:["x=4","x=8","x=2","x=6"], answer:"x=4"},
+  {q:"Find the next term: 1, 4, 9, 16,...", options:["25","20","24","30"], answer:"25"},
+  {q:"If f(x) = x^3, find f'(2).", options:["12","8","6","10"], answer:"12"},
+  {q:"Solve: 5x - 3 = 2x + 6.", options:["x=3","x=2","x=1","x=4"], answer:"3"},
+  {q:"The binomial coefficient of x^2 in (x+3)^4.", options:["54","36","27","12"], answer:"36"},
+  {q:"If u = i + j, v = 2i - j, find u•v.", options:["1","0","2","-1"], answer:"1"},
+  {q:"Find the derivative of y = 5x^4 - 3x^2 + 2.", options:["20x^3 - 6x","5x^3 - 3x","20x^4 - 6x^2","5x^4 - 6x"], answer:"20x^3 - 6x"},
+  {q:"Evaluate \(\int (4x^3 - 2x) dx\).", options:["x^4 - x^2 + C","x^4 - 2x + C","4x^4 - 2x + C","x^3 - x^2 + C"], answer:"x^4 - x^2 + C"},
+  {q:"If the sum of first n terms of AP is S_n = n^2 + 3n, find a_5.", options:["13","15","18","20"], answer:"13"},
+  {q:"Solve for x: 3x^2 - 5x - 2 = 0.", options:["2 or -1/3","1 or -2","2 or 1","-2 or 1/3"], answer:"2 or -1/3"},
+  {q:"Find the inverse of f(x) = (x - 2)/3.", options:["f⁻¹(x) = 3x + 2","f⁻¹(x) = x/3 + 2","f⁻¹(x) = 3x - 2","f⁻¹(x) = x - 6"], answer:"f⁻¹(x) = 3x + 2"},
+  {q:"The sum of an infinite GP is 12 and first term is 8. Find the common ratio.", options:["1/3","1/2","1/4","2/3"], answer:"1/3"},
+  {q:"If vectors a = 3i - 2j and b = i + 4j, find a•b.", options:["-5","10","6","0"], answer:"-5"},
+  {q:"Find the 6th term of the sequence a_n = 2n^2 - n + 1.", options:["61","55","65","51"], answer:"61"},
+  {q:"Solve log(x) + log(2x) = 2.", options:["x=2","x=1","x=3","x=4"], answer:"x=2"},
+  {q:"Solve: e^{3x} = 20.", options:["x = ln20/3","x = 3ln20","x = ln20/6","x = ln20"], answer:"x = ln20/3"},
+  {q:"The determinant of \(\begin{bmatrix}3 & 4\\2 & 5\end{bmatrix}\) is?", options:["7","11","-2","-1"], answer:"7"},
+  {q:"If y = cos(x^2), find dy/dx.", options:["-2x sin(x^2)","sin(x^2)","-cos(x^2)","2x sin(x^2)"], answer:"-2x sin(x^2)"},
+  {q:"Evaluate \(\int_0^1 (3x^2 + 2) dx\).", options:["3","4","5","6"], answer:"3"},
+  {q:"Solve 2^x = 32.", options:["x=5","x=6","x=4","x=3"], answer:"x=5"},
+  {q:"Find the next term in sequence: 3, 7, 13, 21,...", options:["31","29","33","27"], answer:"31"},
+  {q:"If f(x) = x^3 - 3x, find f'(x).", options:["3x^2 - 3","3x^2 + 3","x^2 - 3","x^2 + 3"], answer:"3x^2 - 3"},
+  {q:"Find the coefficient of x^3 in (2x + 5)^5.", options:["80","100","160","200"], answer:"80"},
+  {q:"Solve 3x - 4 = 2x + 5.", options:["x=9","x=1","x=-1","x=5"], answer:"x=9"},
+  {q:"If u = 2i + 3j and v = i - j, find u × v (2D magnitude).", options:["-5","5","1","0"], answer:"5"},
+  {q:"Evaluate \(\int x e^x dx\).", options:["x e^x - e^x + C","x e^x + e^x + C","e^x - x e^x + C","x^2 e^x + C"], answer:"x e^x - e^x + C"},
+  {q:"Solve sin^2(x) + cos^2(x) = ?", options:["1","0","2","-1"], answer:"1"},
+  {q:"Find sum: 1 + 3 + 5 + ... + 19.", options:["100","90","95","105"], answer:"100"},
+  {q:"Find f⁻¹(x) if f(x) = 4x + 7.", options:["f⁻¹(x) = (x-7)/4","f⁻¹(x) = 4x - 7","f⁻¹(x) = (x+7)/4","f⁻¹(x) = x/4 + 7"], answer:"f⁻¹(x) = (x-7)/4"},
+  {q:"Find a_12 for AP: 5, 8, 11,...", options:["38","35","32","40"], answer:"38"},
+  {q:"Solve: log_3(x) = 4.", options:["x=81","x=64","x=27","x=16"], answer:"x=81"},
+  {q:"Find derivative of y = ln(5x).", options:["1/x","1/(5x)","5/x","5x"], answer:"1/x"},
+  {q:"Find the roots of x^2 + x - 6 = 0.", options:["2 and -3","3 and -2","1 and -6","-1 and 6"], answer:"2 and -3"},
+  {q:"Solve 2x + 5 < 11.", options:["x<3","x>3","x<2","x>2"], answer:"x<3"},
+  {q:"Find the sum of first 15 natural numbers.", options:["120","105","110","115"], answer:"120"},
+  {q:"Evaluate \(\int (2x+1) dx\).", options:["x^2 + x + C","2x +1 + C","x^2 +1 + C","x + C"], answer:"x^2 + x + C"},
+  {q:"Find a_5 of sequence: a_n = n^2 + 1.", options:["26","25","24","27"], answer:"26"},
+  {q:"Solve e^x = 7.", options:["x=ln7","x=7","x=ln6","x=1"], answer:"x=ln7"},
+  {q:"Find coefficient of x^2 in (x+2)^4.", options:["6","8","12","4"], answer:"12"},
+  {q:"If f(x) = 2x^2 + 3x -1, find f(2).", options:["9","11","10","12"], answer:"11"},
+  {q:"Solve: cos(x) = 0, x in [0,360°].", options:["90°,270°","0°,180°","45°,135°","60°,240°"], answer:"90°,270°"},
+  {q:"Find the 7th term of AP: 1,4,7,10,...", options:["19","20","21","22"], answer:"19"},
+  {q:"If vectors a = i + 2j, b = 2i - j, find |a + b|.", options:["√10","√9","√8","√7"], answer:"√10"},
+  {q:"Differentiate y = x^4 - 2x^3 + x.", options:["4x^3 - 6x^2 + 1","4x^4 - 6x^3 + 1","3x^3 - 6x^2 + 1","4x^3 - 6x + 1"], answer:"4x^3 - 6x^2 + 1"},
+  {q:"Find ∫(cos x) dx.", options:["sin x + C","cos x + C","-sin x + C","-cos x + C"], answer:"sin x + C"},
+  {q:"Solve 5^x = 125.", options:["x=3","x=2","x=5","x=1"], answer:"x=3"},
+  {q:"The sum of interior angles of a pentagon is?", options:["540°","360°","720°","480°"], answer:"540°"},
+  {q:"Find f⁻¹(11) if f(x) = 3x + 2.", options:["3","4","5","6"], answer:"3"},
+  {q:"Evaluate ∫(1/x^2) dx.", options:["-1/x + C","1/x + C","x + C","x^2 + C"], answer:"-1/x + C"},
+  {q:"Find the general term of sequence: 2,5,8,11,...", options:["a_n = 3n -1","a_n = 3n + 2","a_n = 3n -2","a_n = 3n +1"], answer:"a_n = 3n -1"},
+  {q:"Find the next term: 1,2,4,8,...", options:["16","12","10","14"], answer:"16"},
+  {q:"If y = e^{3x}, find dy/dx.", options:["3e^{3x}","e^{3x}","6e^{3x}","9e^{3x}"], answer:"3e^{3x"},
+  {q:"Solve: x^2 - 5x + 6 = 0.", options:["2,3","1,6","-2,-3","3,4"], answer:"2,3"},
+  {q:"Find the sum of first 20 odd numbers.", options:["400","380","420","390"], answer:"400"},
+   
+ ],
+ Agric:[
+  {q:"Which of the following is a leguminous crop?", options:["Soybean","Maize","Rice","Wheat"], answer:"Soybean"},
+  {q:"What is the main function of roots in plants?", options:["Absorb water and minerals","Photosynthesis","Reproduction","Transport food"], answer:"Absorb water and minerals"},
+  {q:"Which soil type is best for rice cultivation?", options:["Clay","Sandy","Loamy","Peaty"], answer:"Clay"},
+  {q:"What is the ideal pH for most crops?", options:["6-7","5-6","7-8","4-5"], answer:"6-7"},
+  {q:"Which fertilizer is high in nitrogen?", options:["Urea","TSP","Muriate of Potash","Superphosphate"], answer:"Urea"},
+  {q:"Crop rotation helps mainly to:", options:["Improve soil fertility","Increase pests","Reduce yield","Increase weeds"], answer:"Improve soil fertility"},
+  {q:"What is vermiculture?", options:["Raising earthworms","Irrigation method","Soil testing","Crop rotation"], answer:"Raising earthworms"},
+  {q:"Which of these is a cereal crop?", options:["Maize","Groundnut","Soybean","Cassava"], answer:"Maize"},
+  {q:"Which type of irrigation is most water-efficient?", options:["Drip irrigation","Flood irrigation","Furrow irrigation","Sprinkler irrigation"], answer:"Drip irrigation"},
+  {q:"NPK in fertilizer stands for?", options:["Nitrogen, Phosphorus, Potassium","Nitrogen, Potassium, Phosphate","Nickel, Phosphorus, Kalium","None of the above"], answer:"Nitrogen, Phosphorus, Potassium"},
+  {q:"Legumes help in agriculture because they:", options:["Fix nitrogen in soil","Reduce pests","Increase acidity","Prevent erosion"], answer:"Fix nitrogen in soil"},
+  {q:"Which practice controls soil erosion?", options:["Contour farming","Monocropping","Slash and burn","Broadcasting"], answer:"Contour farming"},
+  {q:"Apex predator in livestock management is?", options:["None","Cat","Lion","Dog"], answer:"None"},
+  {q:"Which of the following is a tuber crop?", options:["Cassava","Maize","Rice","Wheat"], answer:"Cassava"},
+  {q:"Green manure is used to:", options:["Improve soil fertility","Control pests","Irrigate crops","Mulch soil"], answer:"Improve soil fertility"},
+  {q:"Major reason for crop failure is:", options:["Pests and diseases","Too much sunshine","Good soil","Crop rotation"], answer:"Pests and diseases"},
+  {q:"What is organic farming?", options:["Farming without chemicals","Farming with high fertilizer","Intensive irrigation","Monocropping"], answer:"Farming without chemicals"},
+  {q:"Which livestock is a ruminant?", options:["Cow","Pig","Chicken","Rabbit"], answer:"Cow"},
+  {q:"Seed dormancy is broken by:", options:["Scarification","Irrigation","Fertilization","Ploughing"], answer:"Scarification"},
+  {q:"Which is the main carbohydrate source in human diet?", options:["Cassava","Beans","Tomato","Cabbage"], answer:"Cassava"},
+  {q:"Which pest commonly attacks stored grains?", options:["Weevil","Locust","Aphid","Termite"], answer:"Weevil"},
+  {q:"Deforestation mainly affects agriculture by:", options:["Reducing rainfall","Increasing soil fertility","Controlling pests","Improving sunlight"], answer:"Reducing rainfall"},
+  {q:"Which livestock is monogastric?", options:["Pig","Cow","Goat","Sheep"], answer:"Pig"},
+  {q:"Which crop is suitable for swampy areas?", options:["Rice","Maize","Yam","Soybean"], answer:"Rice"},
+  {q:"Which method is used to control weeds mechanically?", options:["Hoeing","Herbicide","Mulching","Irrigation"], answer:"Hoeing"},
+  {q:"Which disease affects cassava?", options:["Cassava mosaic virus","Fowl pox","Foot rot","Blight"], answer:"Cassava mosaic virus"},
+  {q:"Which practice improves soil structure?", options:["Mulching","Overgrazing","Monocropping","Slash and burn"], answer:"Mulching"},
+  {q:"Which is a cash crop?", options:["Cocoa","Maize","Cassava","Yam"], answer:"Cocoa"},
+  {q:"Which method is used to test soil pH?", options:["Litmus paper","Spectrometer","Tensiometer","Ruler"], answer:"Litmus paper"},
+  {q:"Major nutrient in TSP fertilizer is?", options:["Phosphorus","Nitrogen","Potassium","Calcium"], answer:"Phosphorus"},
+  {q:"Which crop is grown for fiber?", options:["Cotton","Maize","Rice","Cassava"], answer:"Cotton"},
+  {q:"Silage is used to feed:", options:["Cattle","Chicken","Sheep","Fish"], answer:"Cattle"},
+  {q:"Legumes are important because they:", options:["Fix nitrogen","Produce starch","Provide protein","Control weeds"], answer:"Fix nitrogen"},
+  {q:"Which method conserves water in irrigation?", options:["Drip irrigation","Flooding","Furrow irrigation","Broadcast"], answer:"Drip irrigation"},
+  {q:"Which livestock is poultry?", options:["Chicken","Cow","Goat","Sheep"], answer:"Chicken"},
+  {q:"Which crop is perennial?", options:["Oil palm","Maize","Rice","Tomato"], answer:"Oil palm"},
+  {q:"Which fertilizer is mainly potassium?", options:["Muriate of Potash","Urea","TSP","Ammonium Sulphate"], answer:"Muriate of Potash"},
+  {q:"Which is a leguminous tree?", options:["Acacia","Oil palm","Mango","Cocoa"], answer:"Acacia"},
+  {q:"Which is a root crop?", options:["Yam","Maize","Rice","Soybean"], answer:"Yam"},
+  {q:"Weed control by covering soil is called?", options:["Mulching","Hoeing","Irrigation","Fertilization"], answer:"Mulching"},
+  {q:"Which method prevents runoff erosion?", options:["Contour farming","Broadcasting","Ploughing","Monocropping"], answer:"Contour farming"},
+  {q:"Major macronutrient in urea?", options:["Nitrogen","Phosphorus","Potassium","Calcium"], answer:"Nitrogen"},
+  {q:"Which is a horticultural crop?", options:["Tomato","Maize","Rice","Cassava"], answer:"Tomato"},
+  {q:"Which crop requires swampy soil?", options:["Rice","Yam","Maize","Cassava"], answer:"Rice"},
+  {q:"Which crop is used in crop rotation with cereals?", options:["Legumes","Tubers","Root crops","Cash crops"], answer:"Legumes"},
+  {q:"Which practice reduces soil acidity?", options:["Liming","Mulching","Irrigation","Weeding"], answer:"Liming"},
+  {q:"Which type of fertilizer is NPK?", options:["Compound fertilizer","Organic fertilizer","Manure","Lime"], answer:"Compound fertilizer"},
+  {q:"Which crop is drought-tolerant?", options:["Sorghum","Rice","Yam","Maize"], answer:"Sorghum"},
+  {q:"Which livestock produces wool?", options:["Sheep","Cow","Goat","Pig"], answer:"Sheep"},
+  {q:"Which is a leguminous vegetable?", options:["Okra","Tomato","Cabbage","Onion"], answer:"Okra"},
+  {q:"Which of the following is a cereal crop?", options:["Maize","Soybean","Cassava","Groundnut"], answer:"Maize"},
+  {q:"Which crop is a legume?", options:["Groundnut","Rice","Maize","Yam"], answer:"Groundnut"},
+  {q:"Best method to control soil erosion?", options:["Contour farming","Broadcasting","Monocropping","Ploughing"], answer:"Contour farming"},
+  {q:"Which livestock is a ruminant?", options:["Goat","Pig","Chicken","Rabbit"], answer:"Goat"},
+  {q:"Major nutrient in urea fertilizer?", options:["Nitrogen","Phosphorus","Potassium","Calcium"], answer:"Nitrogen"},
+  {q:"What is vermiculture used for?", options:["Raising earthworms","Soil testing","Mulching","Irrigation"], answer:"Raising earthworms"},
+  {q:"Crop rotation is mainly to:", options:["Improve soil fertility","Reduce sunlight","Increase pests","Reduce rainfall"], answer:"Improve soil fertility"},
+  {q:"Which crop is drought-tolerant?", options:["Sorghum","Rice","Maize","Yam"], answer:"Sorghum"},
+  {q:"Which crop requires swampy soil?", options:["Rice","Maize","Yam","Soybean"], answer:"Rice"},
+  {q:"Which type of irrigation conserves most water?", options:["Drip irrigation","Flood irrigation","Furrow irrigation","Sprinkler irrigation"], answer:"Drip irrigation"},
+  {q:"A perennial crop is:", options:["Oil palm","Maize","Cassava","Tomato"], answer:"Oil palm"},
+  {q:"Which crop is grown for fiber?", options:["Cotton","Maize","Rice","Yam"], answer:"Cotton"},
+  {q:"Which fertilizer is rich in potassium?", options:["Muriate of Potash","Urea","TSP","Ammonium Sulphate"], answer:"Muriate of Potash"},
+  {q:"Major disease of cassava is:", options:["Cassava mosaic virus","Foot rot","Blight","Fowl pox"], answer:"Cassava mosaic virus"},
+  {q:"Which livestock is monogastric?", options:["Pig","Cow","Goat","Sheep"], answer:"Pig"},
+  {q:"Green manure helps to:", options:["Improve soil fertility","Increase pests","Reduce sunlight","Control weeds"], answer:"Improve soil fertility"},
+  {q:"Which crop is used in crop rotation with cereals?", options:["Legumes","Root crops","Tubers","Cash crops"], answer:"Legumes"},
+  {q:"Best way to control weeds mechanically?", options:["Hoeing","Mulching","Irrigation","Fertilization"], answer:"Hoeing"},
+  {q:"Which livestock produces wool?", options:["Sheep","Cow","Goat","Pig"], answer:"Sheep"},
+  {q:"Which is a horticultural crop?", options:["Tomato","Maize","Cassava","Rice"], answer:"Tomato"},
+  {q:"Which crop is a root crop?", options:["Yam","Maize","Rice","Soybean"], answer:"Yam"},
+  {q:"Mulching is done to:", options:["Conserve soil moisture","Increase pests","Reduce sunlight","Control weeds"], answer:"Conserve soil moisture"},
+  {q:"Which crop is a cash crop?", options:["Cocoa","Maize","Cassava","Rice"], answer:"Cocoa"},
+  {q:"Which fertilizer is mainly phosphorus?", options:["TSP","Urea","Muriate of Potash","Ammonium Sulphate"], answer:"TSP"},
+  {q:"Seed dormancy can be broken by:", options:["Scarification","Irrigation","Fertilization","Ploughing"], answer:"Scarification"},
+  {q:"Which crop is suitable for upland areas?", options:["Maize","Rice","Sugarcane","Swamp yam"], answer:"Maize"},
+  {q:"Which soil type is best for most crops?", options:["Loamy","Clay","Sandy","Peaty"], answer:"Loamy"},
+  {q:"Which crop is leguminous vegetable?", options:["Okra","Tomato","Cabbage","Onion"], answer:"Okra"},
+  {q:"Liming is done to:", options:["Reduce soil acidity","Increase pests","Increase soil erosion","Control weeds"], answer:"Reduce soil acidity"},
+  {q:"Which livestock is considered poultry?", options:["Chicken","Goat","Cow","Sheep"], answer:"Chicken"},
+  {q:"Major nutrient in Muriate of Potash?", options:["Potassium","Nitrogen","Phosphorus","Calcium"], answer:"Potassium"},
+  {q:"Crop failure is often caused by:", options:["Pests and diseases","Too much sunlight","Good soil","Fertilizer"], answer:"Pests and diseases"},
+  {q:"Deforestation affects agriculture by:", options:["Reducing rainfall","Increasing pests","Increasing soil fertility","Improving sunlight"], answer:"Reducing rainfall"},
+  {q:"Which crop is suitable for swampy areas?", options:["Rice","Maize","Yam","Soybean"], answer:"Rice"},
+  {q:"Organic farming means:", options:["Farming without chemicals","Farming with chemicals","Intensive irrigation","Monocropping"], answer:"Farming without chemicals"},
+  {q:"Which crop is perennial tree?", options:["Cocoa","Maize","Rice","Tomato"], answer:"Cocoa"},
+  {q:"Which crop is grown for human carbohydrate?", options:["Cassava","Beans","Cabbage","Tomato"], answer:"Cassava"},
+  {q:"Weed control by covering soil is called?", options:["Mulching","Hoeing","Irrigation","Broadcasting"], answer:"Mulching"},
+  {q:"Which practice improves soil structure?", options:["Mulching","Overgrazing","Monocropping","Slash and burn"], answer:"Mulching"},
+  {q:"Which crop is mainly for oil production?", options:["Groundnut","Maize","Rice","Yam"], answer:"Groundnut"},
+  {q:"Leguminous trees include:", options:["Acacia","Oil palm","Mango","Cocoa"], answer:"Acacia"},
+  {q:"Which livestock is herbivore?", options:["Cow","Pig","Chicken","Dog"], answer:"Cow"},
+  {q:"Which crop is tuber?", options:["Yam","Maize","Rice","Soybean"], answer:"Yam"},
+  {q:"Fertilizer NPK ratio stands for:", options:["Nitrogen, Phosphorus, Potassium","Nickel, Phosphate, Kalium","Nitrogen, Potassium, Phosphate","None of the above"], answer:"Nitrogen, Phosphorus, Potassium"},
+  {q:"Which crop fixes nitrogen in soil?", options:["Legumes","Maize","Rice","Cassava"], answer:"Legumes"},
+  {q:"Major source of protein in human diet from crops?", options:["Beans","Cassava","Maize","Rice"], answer:"Beans"},
+  {q:"Drip irrigation is used to:", options:["Save water","Flood field","Water all plants","Reduce sunlight"], answer:"Save water"},
+  {q:"Which livestock is ruminant?", options:["Goat","Pig","Chicken","Rabbit"], answer:"Goat"},
+  {q:"Contour farming prevents:", options:["Soil erosion","Pests","Flooding","Acidic soil"], answer:"Soil erosion"},
+  {q:"Which crop is cash crop for export?", options:["Cocoa","Maize","Cassava","Rice"], answer:"Cocoa"},
+  {q:"Which crop is root tuber for human food?", options:["Cassava","Rice","Maize","Soybean"], answer:"Cassava"}
+ ],
+ Livestock:[
+  {q:"Which animal is a ruminant?", options:["Cow","Pig","Chicken","Rabbit"], answer:"Cow"},
+  {q:"Which livestock is monogastric?", options:["Pig","Cow","Goat","Sheep"], answer:"Pig"},
+  {q:"Major product from chicken is:", options:["Eggs","Milk","Wool","Beef"], answer:"Eggs"},
+  {q:"Wool is obtained from:", options:["Sheep","Cow","Goat","Pig"], answer:"Sheep"},
+  {q:"Which livestock is used for ploughing?", options:["Ox","Goat","Chicken","Pig"], answer:"Ox"},
+  {q:"Cattle provide mainly:", options:["Milk and Meat","Eggs","Wool","Leather only"], answer:"Milk and Meat"},
+  {q:"Which animal is used for draft power?", options:["Horse","Chicken","Pig","Rabbit"], answer:"Horse"},
+  {q:"Ruminant animals have:", options:["Four-chambered stomach","Single-chamber stomach","Two stomachs","Three stomachs"], answer:"Four-chambered stomach"},
+  {q:"Which livestock is primarily for meat?", options:["Goat","Cow","Sheep","All of the above"], answer:"All of the above"},
+  {q:"Which disease affects pigs?", options:["Swine fever","Foot and Mouth","Mastitis","Rinderpest"], answer:"Swine fever"},
+  {q:"Broilers are raised mainly for:", options:["Meat","Milk","Eggs","Wool"], answer:"Meat"},
+  {q:"Layers are raised mainly for:", options:["Eggs","Meat","Milk","Wool"], answer:"Eggs"},
+  {q:"Which livestock produces milk?", options:["Cow","Chicken","Goat","All of the above"], answer:"All of the above"},
+  {q:"Which livestock is non-ruminant?", options:["Pig","Cow","Goat","Sheep"], answer:"Pig"},
+  {q:"Which disease affects poultry?", options:["Fowl pox","Rinderpest","Foot rot","Mastitis"], answer:"Fowl pox"},
+  {q:"Which livestock produces leather?", options:["Cow","Chicken","Sheep","All of the above"], answer:"All of the above"},
+  {q:"Which is a small ruminant?", options:["Goat","Cow","Horse","Pig"], answer:"Goat"},
+  {q:"Which animal is considered exotic livestock?", options:["Rabbit","Cow","Goat","Sheep"], answer:"Rabbit"},
+  {q:"Which livestock is dual-purpose (milk & meat)?", options:["Goat","Pig","Chicken","Rabbit"], answer:"Goat"},
+  {q:"Which livestock is commonly used for breeding programs?", options:["Cattle","Pig","Chicken","Sheep"], answer:"Cattle"},
+  {q:"Which livestock is herbivorous?", options:["Cow","Pig","Chicken","Dog"], answer:"Cow"},
+  {q:"Which livestock is carnivorous?", options:["Cat","Cow","Chicken","Sheep"], answer:"Cat"},
+  {q:"Mastitis affects which livestock?", options:["Cow","Pig","Chicken","Goat"], answer:"Cow"},
+  {q:"Which livestock has four stomachs?", options:["Cow","Pig","Chicken","Rabbit"], answer:"Cow"},
+  {q:"Which is an example of exotic poultry?", options:["Turkey","Chicken","Duck","Guinea fowl"], answer:"Turkey"},
+  {q:"Which livestock is used for wool production?", options:["Sheep","Cow","Goat","Pig"], answer:"Sheep"},
+  {q:"Which livestock is considered monogastric?", options:["Pig","Cow","Goat","Sheep"], answer:"Pig"},
+  {q:"Which livestock is adapted to arid regions?", options:["Goat","Cow","Pig","Sheep"], answer:"Goat"},
+  {q:"Which livestock is used for racing?", options:["Horse","Cow","Pig","Chicken"], answer:"Horse"},
+  {q:"Which livestock is mainly for draft purposes?", options:["Ox","Goat","Rabbit","Pig"], answer:"Ox"},
+  {q:"Which disease affects cattle?", options:["Rinderpest","Fowl pox","Swine fever","Foot rot"], answer:"Rinderpest"},
+  {q:"Which livestock is small ruminant?", options:["Sheep","Cow","Horse","Pig"], answer:"Sheep"},
+  {q:"Which animal produces cash from meat and milk?", options:["Cow","Pig","Chicken","Rabbit"], answer:"Cow"},
+  {q:"Which livestock is non-ruminant?", options:["Pig","Goat","Cow","Sheep"], answer:"Pig"},
+  {q:"Which poultry is primarily for meat?", options:["Broiler","Layer","Duck","Turkey"], answer:"Broiler"},
+  {q:"Which poultry is primarily for eggs?", options:["Layer","Broiler","Turkey","Guinea fowl"], answer:"Layer"},
+  {q:"Which livestock is best for intensive farming?", options:["Pig","Cow","Goat","Sheep"], answer:"Pig"},
+  {q:"Which livestock is best for extensive grazing?", options:["Cow","Pig","Chicken","Rabbit"], answer:"Cow"},
+  {q:"Which livestock produces both meat and wool?", options:["Sheep","Cow","Goat","Pig"], answer:"Sheep"},
+  {q:"Which livestock is high-risk for zoonotic diseases?", options:["Pig","Cow","Goat","Sheep"], answer:"Pig"},
+  {q:"Which livestock can survive on poor quality forage?", options:["Goat","Cow","Pig","Sheep"], answer:"Goat"},
+  {q:"Which animal is considered exotic livestock?", options:["Rabbit","Goat","Cow","Sheep"], answer:"Rabbit"},
+  {q:"Which livestock is preferred for urban farming?", options:["Chicken","Cow","Sheep","Goat"], answer:"Chicken"},
+  {q:"Which livestock is used for milk and cheese production?", options:["Cow","Pig","Chicken","Sheep"], answer:"Cow"},
+  {q:"Which livestock is best for meat production in short time?", options:["Broiler chicken","Cow","Goat","Sheep"], answer:"Broiler chicken"},
+  {q:"Which livestock is naturally resistant to trypanosomiasis?", options:["Sheep","Cow","Pig","Goat"], answer:"Sheep"},
+  {q:"Which poultry is free-range type?", options:["Local chicken","Layer","Broiler","Turkey"], answer:"Local chicken"},
+  {q:"Which livestock is used for hybrid breeding?", options:["Cattle","Pig","Goat","Chicken"], answer:"Cattle"},
+  {q:"Which animal is used for organic manure production?", options:["Cow","Pig","Chicken","Rabbit"], answer:"Cow"},
+  {q:"Which livestock is used for traction on farms?", options:["Ox","Goat","Chicken","Pig"], answer:"Ox"},
+  {q:"Which livestock is adapted to hot climates?", options:["Goat","Sheep","Pig","Cow"], answer:"Goat"},
+  {q:"Which poultry is used for both meat and eggs?", options:["Dual-purpose chicken","Layer","Broiler","Turkey"], answer:"Dual-purpose chicken"},
+  {q:"Which disease affects goats?", options:["Peste des petits ruminants","Swine fever","Rinderpest","Fowl pox"], answer:"Peste des petits ruminants"},
+  {q:"Which livestock is high in protein for human diet?", options:["Chicken","Cow","Sheep","Goat"], answer:"Chicken"},
+  {q:"Which livestock requires minimum housing?", options:["Goat","Cow","Pig","Chicken"], answer:"Goat"},
+  {q:"Which livestock is best for intensive egg production?", options:["Layer chicken","Broiler","Turkey","Duck"], answer:"Layer chicken"},
+  {q:"Which livestock is considered exotic?", options:["Turkey","Local chicken","Cow","Goat"], answer:"Turkey"},
+  {q:"Which animal is used for crossbreeding programs?", options:["Cattle","Pig","Chicken","Goat"], answer:"Cattle"},
+  {q:"Which livestock produces wool for textile industry?", options:["Sheep","Cow","Goat","Pig"], answer:"Sheep"},
+  {q:"Which poultry disease is viral?", options:["Newcastle disease","Coccidiosis","Mastitis","Rinderpest"], answer:"Newcastle disease"},
+  {q:"Which livestock is mono-gastric?", options:["Pig","Cow","Sheep","Goat"], answer:"Pig"},
+  {q:"Which livestock is best for small-scale urban farming?", options:["Chicken","Cow","Goat","Sheep"], answer:"Chicken"},
+  {q:"Which livestock can survive on shrubs and poor pasture?", options:["Goat","Cow","Pig","Sheep"], answer:"Goat"},
+  {q:"Which poultry is considered native or local?", options:["Local chicken","Layer","Broiler","Turkey"], answer:"Local chicken"},
+  {q:"Which livestock is primarily for milk?", options:["Cow","Pig","Chicken","Sheep"], answer:"Cow"},
+  {q:"Which livestock produces both milk and meat efficiently?", options:["Goat","Pig","Chicken","Rabbit"], answer:"Goat"},
+  {q:"Which livestock is prone to trypanosomiasis?", options:["Cattle","Sheep","Goat","Pig"], answer:"Cattle"},
+  {q:"Which livestock is best for rapid meat production?", options:["Broiler chicken","Cow","Sheep","Goat"], answer:"Broiler chicken"},
+  {q:"Which livestock is used in organic manure production?", options:["Cow","Pig","Chicken","Rabbit"], answer:"Cow"},
+  {q:"Which livestock is used for breeding exotic and local crosses?", options:["Cattle","Pig","Goat","Sheep"], answer:"Cattle"},
+  {q:"Which animal is herbivorous?", options:["Cow","Pig","Chicken","Dog"], answer:"Cow"},
+  {q:"Which livestock is considered small ruminant?", options:["Goat","Cow","Pig","Horse"], answer:"Goat"},
+  {q:"Which poultry requires high protein feed for growth?", options:["Broiler chicken","Layer","Turkey","Duck"], answer:"Broiler chicken"},
+  {q:"Which livestock is best for pasture grazing?", options:["Cow","Pig","Chicken","Rabbit"], answer:"Cow"},
+  {q:"Which livestock is considered dual-purpose?", options:["Goat","Cow","Chicken","Sheep"], answer:"Goat"},
+  {q:"Which livestock is susceptible to foot and mouth disease?", options:["Cattle","Chicken","Pig","Rabbit"], answer:"Cattle"},
+  {q:"Which animal produces milk and cheese?", options:["Cow","Pig","Chicken","Goat"], answer:"Cow"},
+  {q:"Which livestock is suitable for arid and semi-arid zones?", options:["Goat","Cow","Sheep","Pig"], answer:"Goat"},
+  {q:"Which livestock is fast-growing and suitable for commercial meat production?", options:["Broiler chicken","Cow","Goat","Sheep"], answer:"Broiler chicken"},
+  {q:"Which livestock is best for organic farming?", options:["Cow","Pig","Chicken","Rabbit"], answer:"Cow"},
+  {q:"Which livestock is used for both draft and meat?", options:["Ox","Goat","Cow","Sheep"], answer:"Ox"},
+  {q:"Which poultry produces high-quality eggs?", options:["Layer chicken","Broiler","Turkey","Duck"], answer:"Layer chicken"},
+  {q:"Which livestock is naturally resistant to some diseases?", options:["Sheep","Cow","Pig","Goat"], answer:"Sheep"},
+  {q:"Which livestock is prone to mastitis?", options:["Cow","Pig","Chicken","Goat"], answer:"Cow"},
+  {q:"Which livestock is preferred for backyard farming?", options:["Goat","Cow","Pig","Sheep"], answer:"Goat"},
+  {q:"Which poultry disease is bacterial?", options:["Fowl cholera","Newcastle","Ranikhet","Marek's"], answer:"Fowl cholera"},
+  {q:"Which livestock produces leather as by-product?", options:["Cow","Pig","Chicken","Goat"], answer:"Cow"},
+  {q:"Which livestock is used for meat in short duration?", options:["Broiler chicken","Cow","Sheep","Goat"], answer:"Broiler chicken"},
+  {q:"Which livestock can adapt to poor feed quality?", options:["Goat","Cow","Pig","Sheep"], answer:"Goat"},
+  {q:"Which livestock is suitable for mixed farming?", options:["Cow","Chicken","Pig","Goat"], answer:"Cow"},
+  {q:"Which livestock produces milk with high butterfat content?", options:["Goat","Cow","Sheep","Buffalo"], answer:"Buffalo"},
+  {q:"Which livestock can survive in semi-arid areas?", options:["Goat","Cow","Pig","Sheep"], answer:"Goat"},
+  {q:"Which livestock produces wool suitable for textile?", options:["Sheep","Cow","Goat","Pig"], answer:"Sheep"},
+  {q:"Which livestock can provide both eggs and meat in short time?", options:["Chicken","Cow","Goat","Sheep"], answer:"Chicken"},
+  {q:"Which livestock is used for meat production in extensive systems?", options:["Cattle","Goat","Pig","Chicken"], answer:"Cattle"},
+  {q:"Which livestock is used in breeding programs to improve productivity?", options:["Cattle","Pig","Chicken","Goat"], answer:"Cattle"},
+  {q:"Which livestock produces high-value milk for cheese?", options:["Cow","Goat","Sheep","Buffalo"], answer:"Cow"},
+  {q:"Which animal is considered exotic livestock?", options:["Rabbit","Goat","Cow","Sheep"], answer:"Rabbit"},
+  {q:"Which livestock produces eggs in intensive system?", options:["Layer chicken","Broiler","Turkey","Duck"], answer:"Layer chicken"}
+
+ ],
+ 
+ 
+};
+
+// ==================== VARIABLES ====================
+let examQuestionsPerSubject={};
+let currentIndexPerSubject={};
+let currentSubject="";
+let subjectScores={};
+let totalScore=0;
+let timer=7200;
+let timerInterval;
+
+// ==================== START EXAM ====================
+function startExam(){
+const checked=document.querySelectorAll(".subj:checked");
+if(checked.length!==3){ document.getElementById("error").innerText="Select exactly 3 subjects"; return; }
+
+examQuestionsPerSubject={};
+currentIndexPerSubject={};
+subjectScores={};
+
+// English compulsory
+subjectScores["English"]=0;
+examQuestionsPerSubject["English"]=getRandomQuestions(subjects.English,40);
+currentIndexPerSubject["English"]=0;
+
+// Selected subjects
+checked.forEach(cb=>{
+  if(subjects[cb.value]){
+    subjectScores[cb.value]=0;
+    examQuestionsPerSubject[cb.value]=getRandomQuestions(subjects[cb.value],40);
+    currentIndexPerSubject[cb.value]=0;
+  }
+});
+
+document.getElementById("subjectScreen").style.display="none";
+document.getElementById("examScreen").style.display="block";
+
+startTimer();
+startSubject("English"); // start with English by default
+showSubjectNav();
 }
 
-function saveLead(sc){
-  let lb=JSON.parse(localStorage.getItem("leader"))||[];
-  lb.push(sc);
-  lb.sort((a,b)=>b-a);
-  lb=lb.slice(0,1); // keep only top score
-  localStorage.setItem("leader",JSON.stringify(lb));
-}
-
-function showLead(){
-  let lb=JSON.parse(localStorage.getItem("leader"))||[];
-  leadList.innerHTML="";
-  lb.forEach(s=>{
-    const li=document.createElement("li");
-    li.textContent=s;
-    leadList.appendChild(li);
+// ==================== SUBJECT NAVIGATION ====================
+function showSubjectNav(){
+  document.getElementById("subjectNav").style.display="block";
+  const container=document.getElementById("subjectButtons");
+  container.innerHTML="";
+  Object.keys(subjectScores).forEach(sub=>{
+    const btn=document.createElement("button");
+    btn.innerText=sub;
+    btn.onclick=()=>startSubject(sub);
+    container.appendChild(btn);
   });
 }
 
-showLead();
-</script>
+// ==================== START SUBJECT ====================
+function startSubject(sub){
+  currentSubject=sub;
+  loadQuestion();
+}
 
+// ==================== TIMER ====================
+function startTimer(){
+timerInterval=setInterval(()=>{
+let min=Math.floor(timer/60);
+let sec=timer%60;
+document.getElementById("timer").innerText="Time Left: "+min+":"+(sec<10?"0"+sec:sec);
+timer--;
+if(timer<0){ clearInterval(timerInterval); finishExam(); }
+},1000);
+}
+
+// ==================== LOAD QUESTION ====================
+function loadQuestion(){
+let questions=examQuestionsPerSubject[currentSubject];
+let idx=currentIndexPerSubject[currentSubject];
+
+if(idx>=questions.length){ alert(currentSubject+" finished!"); return; }
+
+let q=questions[idx];
+document.getElementById("question").innerText=q.q;
+document.getElementById("progress").innerText="Question "+(idx+1)+" of "+questions.length+" ("+currentSubject+")";
+
+let optionsDiv=document.getElementById("options");
+optionsDiv.innerHTML="";
+q.options.forEach(opt=>{
+  let btn=document.createElement("button");
+  btn.innerText=opt;
+
+  btn.onclick=function(){
+    // Disable all buttons
+    
+
+    // Update score
+    if(opt===q.answer) subjectScores[currentSubject]++;
+    currentIndexPerSubject[currentSubject]++;
+
+    // Wait 0.5s then load next question automatically
+    setTimeout(loadQuestion,500);
+  };
+
+  optionsDiv.appendChild(btn);
+});
+
+// Update total score
+totalScore=0;
+for(let s in subjectScores) totalScore+=subjectScores[s];
+document.getElementById("score").innerText="Total Score: "+totalScore;
+}
+
+// ==================== FINISH EXAM ====================
+function finishExam(){
+clearInterval(timerInterval);
+document.getElementById("question").innerText="Exam Finished!";
+document.getElementById("options").innerHTML="";
+document.getElementById("progress").innerText="";
+
+// Show subject-wise scores
+let scoreText="Your Scores:\n";
+for(let s in subjectScores){
+  scoreText+=s+": "+subjectScores[s]+" / 40\n";
+}
+scoreText+="Total Score: "+totalScore;
+document.getElementById("score").innerText=scoreText;
+
+// Save leaderboard
+saveLeaderboard(subjectScores,totalScore);
+showLeaderboard();
+}
+
+// ==================== LEADERBOARD ====================
+function saveLeaderboard(subScores,total){
+  let lb=JSON.parse(localStorage.getItem("leaderboard"))||[];
+  lb.push({scores:subScores,total:total,date:new Date().toLocaleString()});
+  lb.sort((a,b)=>b.total-a.total);
+  lb=lb.slice(0,5);
+  localStorage.setItem("leaderboard",JSON.stringify(lb));
+}
+
+function showLeaderboard(){
+  let lb=JSON.parse(localStorage.getItem("leaderboard"))||[];
+  let list=document.getElementById("leaderboardList");
+  list.innerHTML="";
+  lb.forEach(entry=>{
+    let li=document.createElement("li");
+    let text=entry.date+" | ";
+    for(let s in entry.scores) text+=s+": "+entry.scores[s]+" ";
+    text+="| Total: "+entry.total;
+    li.innerText=text;
+    list.appendChild(li);
+  });
+}
+</script>
 </body>
 </html>
